@@ -1,0 +1,5 @@
+---
+- name: Run mlnxofedinstall
+  shell: 'echo "y" | ./mlnxofedinstall && /etc/init.d/openibd restart'
+  args:
+    chdir: '~/{{ mellanox_ib_driver_name }}'

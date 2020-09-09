@@ -1,0 +1,12 @@
+---
+- name: Clone Freeflow repo
+  become: yes
+  become_user: "{{ ansible_user }}"
+  command: 'git clone https://github.com/emersonford/Freeflow.git'
+  args:
+    creates: '~/Freeflow'
+    chdir: '~'
+  notify:
+    - Build base Docker image
+    - Build ffrouter Docker image
+    - Build ffclient Docker image

@@ -1,0 +1,3 @@
+[submodule "Freeflow"]
+	path = Freeflow
+	url = https://github.com/emersonford/Freeflow.git

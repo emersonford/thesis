@@ -1,0 +1,8 @@
+---
+- name: Pull Mellanox drivers
+  shell: 'curl {{ mellanox_ib_driver_url }} | tar -xz'
+  args:
+    creates: '~/{{ mellanox_ib_driver_name }}/'
+    chdir: '~'
+    warn: no
+  notify: Run mlnxofedinstall

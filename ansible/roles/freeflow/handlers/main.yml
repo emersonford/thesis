@@ -1,0 +1,18 @@
+---
+- name: Build base Docker image
+  become: yes
+  command: 'docker build -f Dockerfile-base . -t ffbase'
+  args:
+    chdir: '~emerso0/Freeflow'
+
+- name: Build ffrouter Docker image
+  become: yes
+  command: 'docker build -f Dockerfile-router . -t ffrouter'
+  args:
+    chdir: '~emerso0/Freeflow'
+
+- name: Build ffclient Docker image
+  become: yes
+  command: 'docker build -f Dockerfile-client . -t ffclient'
+  args:
+    chdir: '~emerso0/Freeflow'
