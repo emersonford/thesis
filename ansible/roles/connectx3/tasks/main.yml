@@ -1,0 +1,10 @@
+---
+- name: Create mlx4_core.conf
+  copy:
+    content: "options mlx4_core roce_mode=2"
+    dest: "/etc/modprobe.d/mlx4_core.conf"
+    mode: 0644
+  notify: Restart openibd
+
+- name: Force all handlers to run
+  meta: flush_handlers
