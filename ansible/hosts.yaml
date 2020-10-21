@@ -1,0 +1,28 @@
+all:
+  hosts:
+    connectx3_node1:
+      ansible_host: ms0803.utah.cloudlab.us
+    connectx3_node2:
+      ansible_host: ms0815.utah.cloudlab.us
+    connectx4_node1:
+      ansible_host: hp005.utah.cloudlab.us
+    connectx4_node2:
+      ansible_host: hp012.utah.cloudlab.us
+  vars:
+    ansible_user: emerso0
+    ansible_become: yes
+  children:
+    connectx3:
+      hosts:
+        connectx3_node1:
+        connectx3_node2:
+      vars:
+        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-4.9-0.1.7.0-ubuntu18.04-x86_64'
+        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-4.9-0.1.7.0/MLNX_OFED_LINUX-4.9-0.1.7.0-ubuntu18.04-x86_64.tgz'
+    connectx4:
+      hosts:
+        connectx4_node1:
+        connectx4_node2:
+      vars:
+        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-5.1-0.6.6.0-ubuntu18.04-x86_64'
+        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-5.1-0.6.6.0/MLNX_OFED_LINUX-5.1-0.6.6.0-ubuntu18.04-x86_64.tgz'
