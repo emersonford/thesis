@@ -1,4 +1,38 @@
 ---
+- name: Replace first IP in header
+  replace:
+    path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.h'
+    regexp: '{{ item }}'
+    replace: '{{ hostvars[groups["connectx3"][0]]["ansible_default_ipv4"]["address"] }}'
+  loop:
+    - '192[.]168[.]2[.]13'
+
+- name: Replace second IP in header
+  replace:
+    path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.h'
+    regexp: '{{ item }}'
+    replace: '{{ hostvars[groups["connectx3"][1]]["ansible_default_ipv4"]["address"] }}'
+  loop:
+    - '192[.]168[.]2[.]14'
+
+- name: Replace first IP in cpp
+  replace:
+    path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.cpp'
+    regexp: '{{ item }}'
+    replace: '{{ hostvars[groups["connectx3"][0]]["ansible_default_ipv4"]["address"] }}'
+  loop:
+    - '10[.]47[.]0[.]4'
+    - '192[.]168[.]2[.]13'
+
+- name: Replace second IP in cpp
+  replace:
+    path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.cpp'
+    regexp: '{{ item }}'
+    replace: '{{ hostvars[groups["connectx3"][1]]["ansible_default_ipv4"]["address"] }}'
+  loop:
+    - '10[.]47[.]0[.]5'
+    - '192[.]168[.]2[.]14'
+
 - name: Build base Docker image
   become: yes
   command: 'docker build -f Dockerfile-base . -t ffbase'

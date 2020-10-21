@@ -1,3 +1,0 @@
----
-# All tasks in this role need root access.
-ansible_become: yes

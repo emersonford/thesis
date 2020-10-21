@@ -7,6 +7,21 @@
     creates: '~/Freeflow'
     chdir: '~'
   notify:
+    - Replace first IP in header
+    - Replace second IP in header
+    - Replace first IP in cpp
+    - Replace second IP in cpp
     - Build base Docker image
     - Build ffrouter Docker image
     - Build ffclient Docker image
+
+- name: Create start-containers.sh file
+  become: yes
+  become_user: "{{ ansible_user }}"
+  template:
+    dest: '~/Freeflow/start-containers.sh'
+    mode: '744'
+    src: 'start-containers.sh'
+  vars:
+    host_ip_addr: "{{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.netmask }}"
+    freeflow_host_ip_prefix: "{{ host_ip_addr | ansible.netcommon.ipaddr('address/prefix') }}"

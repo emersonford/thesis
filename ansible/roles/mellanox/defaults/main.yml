@@ -1,0 +1,3 @@
+---
+mellanox_ib_driver_name: 'MLNX_OFED_LINUX-4.9-0.1.7.0-ubuntu18.04-x86_64'
+mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-4.9-0.1.7.0/MLNX_OFED_LINUX-4.9-0.1.7.0-ubuntu18.04-x86_64.tgz'

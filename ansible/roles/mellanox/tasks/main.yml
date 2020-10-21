@@ -6,3 +6,6 @@
     chdir: '~'
     warn: no
   notify: Run mlnxofedinstall
+
+- name: Force all handlers to run
+  meta: flush_handlers
