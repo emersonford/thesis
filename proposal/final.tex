@@ -1,0 +1,170 @@
+\documentclass[12pt,titlepage]{article}
+\usepackage[letterpaper, left=1in, right=1in, top=1in, bottom=1in]{geometry}
+% \documentclass[10pt,titlepage,twocolumn]{article}
+% \usepackage[letterpaper, left=0.75in, right=0.75in, top=0.75in, bottom=0.75in]{geometry}
+\usepackage{amscd,amssymb,amsmath,amsthm,mathtools}
+\usepackage{kpfonts}
+\usepackage{titling}
+\usepackage{setspace}
+\usepackage{biblatex}
+\usepackage{fontawesome}
+\usepackage{enumitem}
+
+\usepackage{tikz}
+\usetikzlibrary{fadings}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shadows.blur}
+\usetikzlibrary{shapes}
+
+\pagenumbering{gobble}
+\addbibresource{citations.bib}
+\renewcommand{\baselinestretch}{1.5}
+
+\title{\Large\textbf{Evaluating the Use of RDMA in High Performance Containers} \\
+Honors Computer Science Bachelor's Thesis Proposal Document}
+\author{\textbf{Author}: Emerson Ford \\
+\textbf{Advisor}: Ryan Stutsman \\
+\textbf{Honors Faculty Advisor}: Tom Henderson \\
+\textbf{Director of Undergraduate Studies}: James de St. Germain }
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{Abstract}
+Containers are an increasingly popular packaging framework for complex applications, offering benefits such as lightweight isolation, portability, and ease of deployment.
+These benefits offer a solution to a myriad of issues that have long been present in high performance computing world, creating a compelling narrative for container adoption in these environments.
+Unfortunately, standard container runtimes rely on relatively slow, virtualized network stacks to achieve network isolation and portability, which are incompatible with the kernel bypass networking technology RDMA\@.
+This has all but prohibited the widespread adoption of containers in high performance computing environments where RDMA-reliant applications are quite common.
+
+Fortunately, recent projects such as Microsoft's FreeFlow and Mellanox's RDMA hardware have created solutions for enabling RDMA inside of containers while maintaining varying degrees of the benefits of standard containers.
+However, despite the strong claims made by these solutions, many of their characteristics such as performance, isolation sacrifices, and scalability are either not well documented or simply not known; characteristics that are critical to assess for several high performance computing use cases.
+This paper will attempt to remedy this issue by identifying, measuring, and comparing these characteristics for the various solutions available today for enabling RDMA in containers.
+Ultimately, this should provide high performance computing end-users a more holistic perspective on which solutions may be most viable for their environment and use case.
+
+\section{Introduction}
+Containers offer a promising solution to a host of issues that have long plagued the high performance computing (HPC) world, notably dependency management, portability, and reproducible environments, through the use of statically built images and standardized container runtimes~\cite{containershpc}.
+For users, cluster administrators, and application developers, this would provide more freedom and ease in application development and deployment as it eliminates the burden of working around the hundreds of possible environments on which the application may be deployed.
+As an added benefit, this also opens the door for easy migration and utilization of new HPC platforms such as the cloud, Kubernetes, and SLATE as these platforms provide first-class container support.
+
+Despite these numerous benefits, the adoption of containers in the HPC world has been particularly slow [CITE NEEDED].
+Among other issues like the until recent lack of rootless container runtimes, native containers do not support Remote Direct Memory Access (RDMA), a networking technology that provides extremely low latency and high throughput by offloading memory accesses from the CPU to NIC hardware (hence the term ``kernel bypass networking'')~\cite{mellanoxrocerdmabenefits}.
+
+This is one of the core barriers for container adoption in HPC environments.
+RDMA has become a necessity in HPC environments due to their large, parallel workloads that often span dozens of machines.
+
+Thus, the use of kernel bypass networking inside of containers requires either a complete circumvention of the container network stack (possible with ``host networking'' mode) or reworking the kernel bypass networking stack to be compatible with container network overlays.
+As the former eliminates several portability and isolation benefits that come with standard containers~\cite{kim2019freeflow}, many vendors and research groups have developed solutions for the latter such as Microsoft FreeFlow~\cite{kim2019freeflow}, MasQ~\cite{he2020masq}, and Mellanox Shared HCA~\cite{mellanoxdockerroce}.
+% These solutions vary from being entirely hardware based to using a hybrid of software and hardware to using software to emulate an entire RDMA NIC.
+
+The story of shared, isolated use of RDMA NICs is by no means new as this has been a long standing problem for virtual machines and cloud providers~\cite{he2020masq} [ADDITIONAL CITE].
+In fact, several of the solutions previously mentioned were initially developed for virtual machines and were subsequently applied to containers.
+However, containers are quite unique in their needs and various usage patterns, which differ significantly from those of virtual machines.
+In particular, containers are unique in that they are (a) treated as more ephemeral constructs than VMs, (b) can be dynamically scaled up or down on one or many hosts, (c) a single host could run tens to hundreds of containers, and (d) heavily utilize software defined networking to facilitate inter-container communication.
+
+% something about what RDMA solutions should container
+
+Even for solutions made first-class for containers, they often fail to be satisfactory for every use case of RDMA and containers, thus are not a ``one size fits all'' solution.
+Ultimately, many of these solutions make varying trade-offs in isolation, performance, or portability, which may be made worse or better by the usage patterns they are put under.
+Unfortunately, these solutions are notorious in not documenting these trade-offs or they fail to provide critical information such as scalability or latency-throughput graphs.
+This makes it difficult for HPC end-users to determine which solution would operate best for their use cases.
+
+For example, HPC centers that use containers for job-scheduling are likely not worried about security isolation, but will care deeply about maintaining full RDMA performance and reducing CPU overhead.
+On the other side, HPC centers that use containers for DMZ-like environments or for multi-tenant environments will find RDMA isolation and controllability between containers to be critical to maintain.
+
+
+In particular, containers are unique in several key ways:
+\begin{itemize}
+   \item Containers are treated as ephemeral
+   \item A single machine could run tens to potentially hundreds of containers
+   \item Container networking is nearly all software-defined
+\end{itemize}
+
+In particular, container semantics dictate the following for container networking:
+\begin{itemize}
+   \item Support for data plane policies such as traffic shaping, QoS, and metering
+   \item Support for control plane policies such as firewall rules, IP translation, and routing
+   \item
+\end{itemize}
+
+
+
+% Container use scenarios
+\begin{itemize}
+   \item Running HPC jobs using a scheduler like SLURM.
+   \item Running HPC jobs using a scheduler like Kubernetes.
+   \item
+\end{itemize}
+
+
+
+Therefore, the specific performance characteristics to be identified are: throughput, latency, packets/requests per second, CPU overhead, memory overhead, and scalability.
+The latter characteristic is particularly important as container environments typically run multiple containers on a single host, thus the question of how performance characteristics change as the number of containers on a single host increases is a concern in these environments.
+
+Therefore, the specific isolation characteristics to be identified are: namespace-like isolation, control plane policy enforcement, data plane policy enforcement, and fairness.
+
+Usage characteristics:
+\begin{description}
+   \item[Ease of Application Enablement:] how difficult is it to
+   \item[Difficulty of instantiating the solution]
+   \item[What types of hardware does this solution support]
+   \item[Maturity]
+\end{description}
+
+\section{Background}
+% Containers and when they're used
+% Why is virtualized networking slow?
+% What is RDMA networking.
+HPC applications tend to make heavy use of specialized, highly performant network fabrics like Infiniband to shuffle data back and forth between different hosts.
+Further, these applications also often utilize RDMA to bypass the kernel's networking stack.
+Unfortunately, many container runtimes rely on the kernel's networking stack to create a \textit{virtualized} networking stack for enforcing network isolation.
+
+To decrease the bottleneck that is multi-machine communication, these workloads tend to heavily utilize a networking technology called Remote Direct Memory Access (RDMA); a form of kernel bypass networking that allows for access to a remote host's memory with extremely low latency and high throughput.
+However, container runtimes rely on the kernel's network stack to create a ``virtualized'' overlay network for enforcing network isolation, thus any kernel bypass networking solutions would seem to be incompatible with existing container network stacks~\cite{abbasi2019performance}.
+While containers can be run without network isolation in a mode called ``host networking'' that allow for the direct use of the RDMA network interface inside of containers, this reduces portability and disables network isolation, eliminating many of the benefits of containers~\cite{dockerhostnetworking}.
+
+These solutions can generally categorized as either software based/paravirtualized or hardware-based.
+Software based/paravirtualized solutions generally either entirely emulate an RDMA NIC or use software for just the control plane of the NIC, however they tend to be more resource intensive and struggle to provide the full performance capability of the underlying hardware.
+Hardware based solutions rely on features built into the NIC hardware itself, however they tend not to be generalizable to commodity hardware, are less flexible, and suffer scaling issues due to limited hardware resources.
+
+The reason for this lack of support is two-fold.
+First, due to a lack of configurable isolation capabilities inside of NIC hardware, container runtimes rely on ``virtualized'' network stacks created through the host kernel for network overlays and isolation [CITE NEEDED].
+These virtualized network stacks have been shown to be both CPU intensive and significantly reduce container networking performance~\cite{abbasi2019performance}.
+Second, due to the reliance on the host kernel, any form of networking that bypasses the kernel is inherently incompatible with existing container networking stacks.
+
+
+\section{Proposed Work}
+
+\section{Schedule}
+
+% \section{Discussion}
+% Security
+
+% \section{Related Work}
+% RDMA Namespaces
+% Calico eBPF
+% Sharing RDMA NICs between Virtual Machines
+
+\nocite{*}
+\pagebreak
+\section*{References}
+\printbibliography[heading=subbibliography,keyword={containers},title={Containers}]{}
+\printbibliography[heading=subbibliography,keyword={containernetworking},title={Container Networking}]{}
+\printbibliography[heading=subbibliography,keyword={rdmacontainers},title={RDMA in Containers}]{}
+\printbibliography[heading=subbibliography,keyword={rdmaresearch},title={RDMA Specific Research}]{}
+\printbibliography[heading=subbibliography,keyword={highperfnetworking},title={High Performance Networking}]{}
+\printbibliography[heading=subbibliography,keyword={kernelbypassnetworking},title={Kernel Bypass Networking}]{}
+\printbibliography[heading=subbibliography,keyword={documentation},title={Documentation}]{}
+\printbibliography[heading=subbibliography,keyword={tutorial},title={Tutorials}]{}
+\printbibliography[heading=subbibliography,keyword={mellanox},title={Mellanox Infosheets}]{}
+
+\pagebreak
+\section*{Appendix}
+\appendix
+\section{RDMA Two-Sided Ops Diagram}
+\resizebox{\textwidth}{!}{
+   \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+      \input{rdmatwosided.tikz}
+   \end{tikzpicture}
+}
+\end{document}

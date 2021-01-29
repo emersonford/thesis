@@ -1,0 +1,8 @@
+\frametitle{RDMA One-Sided Ops}
+\resizebox{\textwidth}{!}{
+      \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+          \input{rdmaonesided.tikz}
+      \end{tikzpicture}
+  }
+  \footnotetext[0]{\tiny Every object in the protection domain is mapped in the application's virtual address space. The HCA can access every object in the protection domain.}
+  \footnotetext[1]{\tiny \texttt{opcode} is one of \texttt{IBV\_WR\_RDMA\_WRITE}, \texttt{IBV\_WR\_RDMA\_READ}, \texttt{IBV\_WR\_ATOMIC\_CMP\_AND\_SWP}, \texttt{IBV\_WR\_SEND}}

@@ -1,0 +1,339 @@
+\documentclass{beamer}
+\usepackage{pgfpages}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{caption}
+
+% TikZ
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{mathdots}
+\usepackage{yhmath}
+\usepackage{cancel}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usetikzlibrary{fadings}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shadows.blur}
+\usetikzlibrary{shapes}
+
+\usetheme[sectionpage=simple,block=fill]{metropolis}
+% \setbeameroption{show notes on second screen}
+
+\definecolor{ured}{HTML}{CC0000}
+\definecolor{ugray}{HTML}{808080}
+\setbeamercolor{title separator}{fg=ured}
+\setbeamercolor{frametitle}{bg=ured}
+
+\title{Thesis Background Presentation}
+\date{October 5, 2020}
+\author{Emerson Ford}
+\institute{University of Utah School of Computing}
+
+\begin{document}
+\maketitle
+
+\section{Containers}
+
+\begin{frame}{Container Overview}
+    \begin{itemize}
+        \item Increasingly popular framework to distribute and deploy applications.
+        \item Tools like \textbf{Kubernetes} have become popular for container orchestration.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Container Requirements}
+    \begin{itemize}
+        \item Isolation
+            \begin{itemize}
+                \item namespaces
+                \item cgroups
+                \item network policy
+            \end{itemize}
+        \item Portability
+            \begin{itemize}
+                \item migration
+            \end{itemize}
+        \item Performance
+            \begin{itemize}
+                \item low isolation overhead
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Container Networking Requirements}
+    \begin{itemize}
+        \item Control Plane Policies
+            \begin{itemize}
+                \item firewall
+                \item routing
+                \item vlans
+            \end{itemize}
+        \item Data Plane Policies
+            \begin{itemize}
+                \item QoS
+                \item metering
+                \item fairness
+            \end{itemize}
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Container Network Overlay Performance}
+    \begin{columns}
+        \column{.33\textwidth}
+        \includegraphics[width=\textwidth]{overlayperf/cpuutil.png}
+        \column{.33\textwidth}
+        \includegraphics[width=\textwidth]{overlayperf/latency.png}
+        \column{.33\textwidth}
+        \includegraphics[width=\textwidth]{overlayperf/throughput.png}
+    \end{columns}
+    \begin{itemize}
+        \item Current networking isolation requires pretty significant performance sacrifices.
+        \item Less than ideal for HPC applications.
+    \end{itemize}
+    {\let\thefootnote\relax\footnotetext{\tiny source: A Performance Comparison of Container Networking Alternatives by Ubaid Abbasi, El Houssine Bourhim, Mouhamad Dieye, and Halima Elbiaze}}
+\end{frame}
+
+
+\subsection{RDMA}
+\begin{frame}{RDMA Overview}
+    \begin{columns}
+    \column{.5\textwidth}
+    \begin{itemize}
+        \item Form of kernel bypass networking
+        \item \texttt{libibverbs} is the ``narrow waist'' of RDMA operations
+        \item Extremely low latency, high throughput
+    \end{itemize}
+    \column{.5\textwidth}
+        \includegraphics[width=\textwidth]{ibverbsstack.png}
+        \vspace{-25pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: NVIDIA MLNX\_OFED Documentation Rev 5.1-0.6.6.0
+        \end{center}
+        \includegraphics[width=\textwidth]{freeflowibverbsstack.png}
+        \vspace{-25pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: FreeFlow Paper Figure 3
+        \end{center}
+    \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{RDMA Two-Sided Ops}
+  \resizebox{\textwidth}{!}{
+      \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+          \input{rdmatwosided.tikz}
+      \end{tikzpicture}
+  }
+  \footnotetext{\tiny Every object in the protection domain is mapped in the application's virtual address space. The HCA can access every object in the protection domain.}
+\end{frame}
+
+\begin{frame}[fragile]{RDMA One-Sided Ops}
+  \resizebox{\textwidth}{!}{
+      \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+          \input{rdmaonesided.tikz}
+      \end{tikzpicture}
+  }
+  \footnotetext[0]{\tiny Every object in the protection domain is mapped in the application's virtual address space. The HCA can access every object in the protection domain.}
+  \footnotetext[1]{\tiny \texttt{opcode} is one of \texttt{IBV\_WR\_RDMA\_WRITE}, \texttt{IBV\_WR\_RDMA\_READ}, \texttt{IBV\_WR\_ATOMIC\_CMP\_AND\_SWP}, \texttt{IBV\_WR\_SEND}}
+\end{frame}
+
+\begin{frame}{Status Quo}
+    \begin{itemize}
+        \item RDMA significantly improves HPC application performance.
+        \item Containers are quickly becoming a common framework for application distribution and deployment, but container networking isolation is slow.
+        \item \textbf{Note}: similar research is being done for RDMA use in VMs in the cloud
+    \end{itemize}
+
+    \begin{block}{Problem Statement}
+        How can we enable the use RDMA in containers while preserving container requirements and performance?
+    \end{block}
+\end{frame}
+
+\section{Software Approach}
+
+\begin{frame}{Software Approach Overview}
+\textbf{Microkernel / Paravirtualized Approach:}
+    \begin{itemize}
+        \item FreeFlow
+        \item MasQ
+    \end{itemize}
+
+\textbf{Virtualized RDMA:}
+\begin{itemize}
+    \item SoftRoCE
+\end{itemize}
+\end{frame}
+
+\begin{frame}{FreeFlow Architecture}
+    \begin{columns}
+    \column{.5\textwidth}
+    \begin{itemize}
+        \item RDMA client (FreeFlow Library / FFL)
+        \item RDMA server (FreeFlow Router / FFR)
+        \item Communicate with IPC and shared memory
+        \item Only need \texttt{LD\_PRELOAD} to make a FreeFlow compatible application
+    \end{itemize}
+    \column{.5\textwidth}
+        \includegraphics[width=\textwidth]{freeflowarch.png}
+        \vspace{-25pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: FreeFlow Paper Figure 4
+        \end{center}
+
+        \includegraphics[width=\textwidth]{freeflowibverbsstack.png}
+        \vspace{-25pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: FreeFlow Paper Figure 3
+        \end{center}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{RDMA Send in FreeFlow}
+    \begin{columns}
+    \column{.70\textwidth}
+      \resizebox{\textwidth}{!}{
+          \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+              \input{freeflowrdma.tikz}
+          \end{tikzpicture}
+      }
+    \column{.40\textwidth}
+        \includegraphics[width=0.9\textwidth]{freeflowrdmasend.png}
+        \vspace{-10pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: FreeFlow Paper Figure 5
+        \end{center}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{FreeFlow Library --- Router Communication}
+    \begin{itemize}
+        \item IPC communication
+            \begin{itemize}
+                \item Latency can be $\geq 5\mu s$
+            \end{itemize}
+        \item Fastpath
+            \begin{itemize}
+                \item Move \texttt{TX Queue} and \texttt{RX Queue} to shared memory with FreeFlow router
+                \item FreeFlow router spin reads these queue pairs (with cache flushes)
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{FreeFlow Challenges \& Solutions}
+    \begin{itemize}
+        \item Use shared memory to support and speed up one-sided operations.
+            \begin{itemize}
+                \item Requires \texttt{malloc} highjack to page align memory.
+                \item New functions \texttt{ibv\_malloc} and \texttt{ibv\_free} to avoid this.
+                \item ffrouter must replace \texttt{laddr} with \texttt{laddr'}
+            \end{itemize}
+        \item Utilize \texttt{libibverb}'s built in struct flattening to avoid deep copies in RPC.
+        \item Multiple Unix sockets for parallel RDMA queue pairs to avoid head of line blocking.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{FreeFlow Benefits}
+    \begin{itemize}
+        \item Control plane policy enforcement on queue pairs.
+            \begin{itemize}
+                \item QoS and network overlay enforcements
+            \end{itemize}
+        \item RDMA vNIC can be assigned a private IP, allowing for non-live container migration.
+            \begin{itemize}
+                \item ffrouter can query network overlays to get private IP -$>$ public IP translation.
+            \end{itemize}
+        \item FreeFlow library can run TCP over RDMA using \texttt{rsocket} in \texttt{libibverbs}.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{FreeFlow Performance}
+    \begin{figure}
+        \centering
+        \begin{minipage}{.45\textwidth}
+        \includegraphics[width=\textwidth]{perfgraph1.png}
+        \vspace{-25pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: FreeFlow Paper Figure 9
+        \end{center}
+
+        \end{minipage}%
+        \hspace{10pt}%
+        \begin{minipage}{.45\textwidth}
+        \includegraphics[width=\textwidth]{perfgraph2.png}
+        \vspace{-25pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: FreeFlow Paper Figure 10
+        \end{center}
+        \end{minipage}
+        \begin{minipage}{.25\textwidth}
+        \includegraphics[width=\textwidth]{perfgraph3.png}
+        \vspace{-25pt}
+        \begin{center}
+            \fontsize{4pt}{4pt}\selectfont source: FreeFlow Paper Figure 12
+        \end{center}
+        \end{minipage}
+    \end{figure}
+
+    \begin{itemize}
+        \item Approx 33\% increase in latency for small messages
+        \item Small message sizes bound in tput due to Fastpath single thread bottleneck
+        \item Non-Fastpath CPU util overhead scales with actual load
+            \begin{itemize}
+                \item Fastpath requires at least a single CPU core
+            \end{itemize}
+        \item Applications finish at close to host RDMA speeds
+    \end{itemize}
+\end{frame}
+
+\section{Hardware Approach}
+
+\begin{frame}{SRIOV}
+    \begin{center}
+        \includegraphics[width=0.6\textwidth]{sriovmlnx.png}
+    \end{center}
+
+    \begin{itemize}
+        \item Not portable.
+        \item Control plane policy enforcement relies on switch reconfiguration.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{MACVLAN}
+    \begin{center}
+        \includegraphics[width=0.6\textwidth]{macvlanmnlx.png}
+    \end{center}
+
+    \begin{itemize}
+        \item Control plane policy enforcement relies on switch reconfiguration?
+        \item ``GID table entries are created whenever an IP address is configured on one of the Ethernet devices of the NIC's ports.''
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{RDMA Shared Device}
+    \begin{itemize}
+        \item RDMA namespaces
+        \item RDMA cgroups
+        \item ConnectX6 NICs allow for hardware rules?
+    \end{itemize}
+\end{frame}
+
+% \section{Discussion}
+% \begin{frame}
+%     \begin{itemize}
+%         \item Why is Microsoft and Mellanox pushing for hardware-based isolation when FreeFlow appears to provide these isolations with minimum overhead?
+%         \item Can FreeFlow sufficiently express existing container network policy?
+%         \item Could FreeFlow be applied to other kernel bypass networking solutions?
+%         \item Is this better than zero-copy networking with the standard kernel TCP stack?
+%     \end{itemize}
+% \end{frame}
+
+
+\end{document}
