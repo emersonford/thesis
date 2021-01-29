@@ -5,6 +5,8 @@
     - docker
     - mellanox
     - freeflow
+  vars:
+    group_name: connectx4
 
 - name: configure ConnectX-3 nodes
   hosts: connectx3
@@ -13,3 +15,5 @@
     - mellanox
     - freeflow
     - connectx3
+  vars:
+    group_name: connectx3
