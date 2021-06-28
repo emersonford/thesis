@@ -1,11 +1,9 @@
 all:
   hosts:
     connectx3_node1:
-      # ansible_host: apt016.apt.emulab.net
-      ansible_host: ms0821.utah.cloudlab.us
+      ansible_host: apt054.apt.emulab.net
     connectx3_node2:
-      # ansible_host: apt020.apt.emulab.net
-      ansible_host: ms0823.utah.cloudlab.us
+      ansible_host: apt042.apt.emulab.net
     connectx4_node1:
       ansible_host: hp168.utah.cloudlab.us
     connectx4_node2:
@@ -19,8 +17,8 @@ all:
         connectx3_node1:
         connectx3_node2:
       vars:
-        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-4.9-0.1.7.0-ubuntu18.04-x86_64'
-        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-4.9-0.1.7.0/MLNX_OFED_LINUX-4.9-0.1.7.0-ubuntu18.04-x86_64.tgz'
+        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-4.9-2.2.4.0-ubuntu18.04-x86_64'
+        mellanox_ib_driver_url: 'https://content.mellanox.com/ofed/MLNX_OFED-4.9-2.2.4.0/MLNX_OFED_LINUX-4.9-2.2.4.0-ubuntu18.04-x86_64.tgz'
     connectx4:
       hosts:
         connectx4_node1:
