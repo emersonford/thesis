@@ -1,7 +1,9 @@
 \documentclass[12pt,titlepage]{article}
 \usepackage[letterpaper, left=1in, right=1in, top=1in, bottom=1in]{geometry}
+\renewcommand{\baselinestretch}{2}
 % \documentclass[10pt,titlepage,twocolumn]{article}
 % \usepackage[letterpaper, left=0.75in, right=0.75in, top=0.75in, bottom=0.75in]{geometry}
+% \renewcommand{\baselinestretch}{1.2}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
@@ -9,10 +11,11 @@
 \usepackage{kpfonts}
 \usepackage{titling}
 \usepackage{setspace}
-\usepackage{biblatex}
+\usepackage[sortcites=true]{biblatex}
 \usepackage{fontawesome}
-\usepackage{enumitem}
+\usepackage[inline]{enumitem}
 \usepackage{siunitx}
+\usepackage[skip=2pt]{caption}
 
 \usepackage{tikz}
 \usetikzlibrary{fadings}
@@ -20,11 +23,11 @@
 \usetikzlibrary{shadows.blur}
 \usetikzlibrary{shapes}
 
-\pagenumbering{gobble}
+% \pagenumbering{gobble}
 \addbibresource{citations.bib}
-\renewcommand{\baselinestretch}{2}
+\emergencystretch=1em
 
-\title{\Large\textbf{Evaluating the Use of RDMA in High Performance Containers} \\
+\title{\Large\textbf{Explaining and Evaluating the Use of RDMA in High Performance Containers} \\
 Honors Computer Science Bachelor's Thesis Proposal Document}
 \author{\textbf{Author}: Emerson Ford \\
 \textbf{Advisor}: Ryan Stutsman \\
@@ -47,27 +50,27 @@ This thesis attempts to remedy this issue by identifying, measuring, and compari
 ultimately providing high performance computing end-users a more holistic perspective on which solutions may be most viable for their environment and use case.
 
 \section{Introduction}
-% Why containers in HPC
-% Why RDMA in HPC
 Containers offer a promising solution to a host of issues that have long plagued the high performance computing (HPC) world from dependency management to portable and reproducible environments to even lightweight sharing of hardware resources;
 all this is achieved through the use of statically built images and standardized container runtimes~\cite{containershpc}.
 For users, cluster administrators, and application developers, this would provide more freedom and ease in application development and deployment as it eliminates the burden of working around the hundreds of possible environments on which the application may be deployed.
-As an added benefit, this also opens the door for easy migration and utilization of new HPC platforms such as the cloud, Kubernetes, and SLATE that offer new compute and scheduling capabilities and treat containers as first-class objects [CITE NEEDED].
+As an added benefit, this also opens the door for easy migration and utilization of new HPC platforms such as the cloud, Kubernetes, and SLATE that offer new compute and scheduling capabilities and treat containers as first-class objects~\cite{slatepaper}.
 
-However, despite these numerous benefits, the adoption of containers in the HPC world has been notably slow [CITE NEEDED].
+However, despite these numerous benefits, the adoption of containers in the HPC world has been notably slow~\cite{hpcappscontainers}.
 Among other issues like the until-recent lack of rootless container runtimes, native containers do not support Remote Direct Memory Access (RDMA), a networking technology that provides extremely low latency and high throughput with minimal CPU overhead by offloading memory accesses from the CPU to NIC hardware (hence the term ``kernel bypass networking'')~\cite{mellanoxrocerdmabenefits}.
 This lack of support heavily restricts the use of native containers in HPC environments as trends like disaggregated storage, multi-machine workloads, and increased use of parallel libraries such as MPI have necessitated the use of high performance networking like RDMA to maintain performance.
-To make the lack of RDMA support even worse, standard container network stacks by themselves have been shown to be both CPU intensive and significantly reduce container networking performance~\cite{abbasi2019performance}, further worsening the networking downsides of containers in HPC environments.
+To make the lack of RDMA support even worse, standard container network stacks by themselves have been shown to be both CPU intensive and significantly reduce container networking performance~\cite{abbasi2019performance,xavier2013performance,lee2018impact,zhao2017performance,kapovcius2020performance}, further worsening the networking downsides of containers in HPC environments.
 
 While it is possible to run containers without container networking by exposing the host's NIC directly to running containers (a mode called ``host networking''), this comes with several notable disadvantages:
-(1) controlling fair sharing of the RDMA NIC between multiple containers cannot be done programmatically,
-(2) running containers are not relocatable/portable across multiple hosts,
-(3) common container orchestration tools like Kubernetes cannot be used,
-and (4) network isolation and network routing policies for containers is disabled.
+\begin{enumerate*}[label={(\arabic*)},itemjoin*={{, and }},itemjoin={{, }}]
+   \item controlling fair sharing of the RDMA-capable NIC between multiple containers cannot be done programmatically
+   \item running containers are not relocatable/portable across multiple hosts
+   \item common container orchestration tools like Kubernetes cannot be used
+   \item network isolation and network routing policies for containers is disabled
+\end{enumerate*}.
 Thus, while this mode may be a viable for some environments, it is not adequate for the vast majority of container environments --- such as those that utilize Kubernetes heavily --- and additional solutions for enabling RDMA in containers are still needed.
 
 Unfortunately, enabling support for RDMA in containers (and fast networking as a whole) is a nontrivial task.
-Container runtimes rely on ``virtualized'' network stacks for creating flexible network overlays, enforcing isolation, and providing portability [CITE NEEDED].
+Container runtimes rely on ``virtualized'' network stacks for creating flexible network overlays, enforcing isolation, and providing portability~\cite{xavier2013performance}.
 These network stacks have, until recently, only been expressible through software layers provided by the host kernel, adding significant software overhead to the processing of all network packets originating from and destined to containers.
 When provided by software alone, these network stacks are fundamentally incompatible with RDMA which requires bypassing the host kernel entirely for its performance guarantees.
 
@@ -78,14 +81,14 @@ It is currently unnecessarily difficult to pick a solution due to a lack of exha
 % For example, it appears that no notable performance data or isolation capabilities have been published for Mellanox's Shared HCA/SRIOV solution and papers like Microsoft's FreeFlow fail to show performance data for smaller (between 2KB and 8KB) RDMA payloads.
 This information is critical in HPC environments as applications may heavily rely on RDMA's low latency and/or high throughput guarantees; similarly, container security and isolation guarantees may be a requirement for those HPC environments that are multi-tenant or are running untrusted applications.
 
-Therefore, this thesis will analyze multiple properties of the several solutions available today for enabling RDMA in containers, such as SoftRoCE~\cite{pandeysroce}, Microsoft's FreeFlow~\cite{kim2019freeflow}, MasQ~\cite{he2020masq}, and Mellanox's Shared HCA/SRIOV~\cite{mellanoxdockerroce};
+Therefore, this thesis will analyze multiple properties of the several solutions available today for enabling RDMA in containers, such as SoftRoCE~\cite{pandeysroce}, Mellanox's Shared HCA/SRIOV~\cite{mellanoxdockerroce}, Microsoft's FreeFlow~\cite{kim2019freeflow}, and MasQ~\cite{he2020masq};
 these properties being grouped in two main categories:
 
 \noindent
 \textbf{Container Network Properties:}
 \begin{itemize}[nolistsep]
-   \item \textit{Network Isolation}: each container has its own interface, port space, etc (i.e.\ network namespace); further, a container's IP should not inherently depend on the underlying NIC's IP
-   \item \textit{Controllability}: enforcing admission control, routing policies, and traffic shaping on a container with an RDMA NIC
+   \item \textit{Network Isolation}: each container has its own interface, port space, and network policies (also known as a network namespace); further, a container's IP should not inherently depend on the underlying NIC's IP
+   \item \textit{Controllability}: enforcing admission control, routing policies, and traffic shaping on a container with an RDMA-capable NIC
    \item \textit{Resource Utilization}: container networks should not be CPU or memory intensive
 \end{itemize}
 
@@ -107,7 +110,7 @@ and analyzed with varying levels of:
 which should adequately test the scalability of these properties.
 Finally, comments will also be made on:
 \begin{itemize}[nolistsep]
-   \item \textit{Proprietary}: can a solution be used across various RDMA NIC vendors
+   \item \textit{Proprietary}: can a solution be used across various RDMA-capable NIC vendors
    \item \textit{Maturity}: what support exists for a solution, how well tested is a solution
    \item \textit{Ease in Deployment}: are application changes necessary for a solution, how difficult is it to deploy the solution
    \item \textit{Execution Privileges}: can the solution be used without elevated capabilities such as \texttt{CAP\_SYS\_ADMIN}
@@ -122,85 +125,268 @@ Thus, this thesis should also provide general insight as to which implementation
 % TODO: Add summary of conclusion here.
 
 \section{Background}
-\subsection{Networking Planes}
-Networking can be broken down
-% The field of networking is rife with jargon and overloaded terms.
-% For both clarity on the terms to be used as well as to facilitate better understanding of RDMA and container networking fundamentals, the concept of the control plane and data plane of networking will be explained.
+\subsection{Networking Planes}\label{subsec:Networking Planes}
+The state and logic of networking operations can be generally abstracted into three planes: the control plane, the data plane, and the management plane.
+Understanding this abstraction is vital for understanding how these various RDMA in container solutions operate and why they exhibit their specific performance characteristics.
 
-\noindent
-\textbf{Control Plane} handles connection state (e.g.\ initiating, maintaining, and terminating connections), routing policies, admission control, etc.
-Systems such as firewalls, routing tables, \texttt{iptables} / \texttt{nftables}, interface management, and IP assignment (e.g. DHCP) are all considered as part of the control plane.
+The \textit{control plane} handles the rules of how and to where network packets are forwarded.
+Operations such as initiating connections, terminating connections, and connection resource management are considered as part of control plane operations and policies such as firewalls, routing policies and tables, traffic shaping, and interface properties (e.g.\ IP addresses) are considered as part of control plane policies.
+It is desirable to have the control plane be highly flexible and configurable to allow for a wide expression of network topologies.
 
-\noindent
-\textbf{Data Plane} (also known as the forwarding plane) handles the actual transmission of network data.
-Systems such as memory copies into network buffers, packet transmission, and traffic shaping are considered as part of the data plane.
+The \textit{data plane}, also known as the forwarding plane, handles the actual transmission of network data based on the configured logic of the control plane.
+Operations such as memory copies into network buffers and packet transmission over the wire are considered as part of data plane operations and policies such as the size of network buffers are considered as part of data plane policies.
+It is desirable to keep the data plane as low overhead as possible as overhead in the data plane has a significant impact on network performance due to every byte of a packet having to traverse the data plane.
+Notably, it is the data plane that handles the ``execution'' of control plane policies, thus the control plane is only as expressive as the data plane allows.
+
+The \textit{management plane} handles the configuration of the control plane and data plane policies.
+Its operations consists primarily of using software tools such as the iproute2 collection of tools, \texttt{iptables} / \texttt{nftables}, \texttt{DHCP}, and \texttt{ovs-vsctl} that take input to reconfigure the specified plane's policies.
+The management plane's policies primarily consist of security; specifically, defining who has access to use its tools, with what capabilities, and in what contexts.
+
+% todo: keep this?
+% A useful analogy offered by Cloudflare is that of traffic on the roads.
+% The control plane consists of the traffic lights, signs, and lanes along the road.
+% These can be changed, such as changing a light from red to green, to control and redirect the flow of traffic.
+% The data plane is then the actual cars on the road which read the traffic lights, signs, and lanes to determine where to go.
+% The management plane here would be akin to the software city planners use to manage traffic light timings.
+
+In traditional host networking, the control plane and the data plane\footnote{barring the actual transmission on the wire which the NIC handles} exist as software in the kernel.
+This provides an extremely high degree of flexibility and configurability for the control plane and data plane, but it results in the kernel being interposed in every networking operation.
+As a result, this incurs performance penalties from the overhead of context switches, memory copies from user-space to kernel-space (or from RAM to CPU to the network device), and from simply being software (i.e.\ not being hardware accelerated or run on FPGAs).
+On top of this, use of standard network protocols like TCP may exacerbate the performance penalties due to higher code complexity, built in retries and throttling, and protocol header overhead.
 
 \subsection{RDMA Networking}
-Remote Direct Memory Access (RDMA) is a network protocol designed for extremely fast and high throughput access to memory regions on remote hosts with minimal CPU overhead, usually run on top of the Infiniband network fabric or Ethernet (via RoCE).
-RDMA can provide a substantial performance boost for inter-machine memory sharing and synchronization, as well as savings on CPU cycles that would otherwise be used for network operations, both .
-As a result, support for RDMA can now be found in the vast majority of parallel applications and libraries, such as TensorFlow and OpenMPI, and has become ubiquitously used in the high performance computing world~\cite{kim2019freeflow}~[ADDITIONAL CITE].
+Remote Direct Memory Access (RDMA) is an aptly named network protocol designed for the direct reading and writing of the memory of remote hosts with extremely low latency, high bandwidth, and minimal CPU overhead.
+Support for it has been added to a number of parallel applications and libraries, such as TensorFlow and OpenMPI, and has seen wide spread adoption in the high performance computing world where it is run on top of either Infiniband or Ethernet~\cite{kim2019freeflow}.
+At its core, RDMA is a form of kernel-bypass networking in that it shifts almost all of the data plane and control plane from the kernel to a combination of user-space and the network card.
+While this eliminates most of the control plane and data plane configurability provided by the kernel, it provides substantial improvements in network latency and bandwidth.
+For example, current top-of-the-line RDMA enabled NICs are capable of achieving sub-1\si{\micro\second} latency with >100Gb/s flows, performance not possible with even the most aggressive tuning of the Linux networking stack~\cite{mellanoxcx6doc,cloudflarelowlatency,intel800nic}.
 
-At its core, RDMA is a form of kernel-bypass networking,
-% a networking model that shifts the burden of the data plane and/or the control plane from the kernel to either the network card (NIC) or user-space network stacks, often with aid from technologies such as IOMMU.
-% This model eliminates key networking bottlenecks, such as context switch overheads and possible user to kernel space memory copies, thereby providing potential orders of magnitude improvements in network latency and bandwidth.
-meaning it shifts all data plane operations from the kernel to the network card (also called the HCA in RDMA terminology).
-This eliminating bottlenecks that arise from context switches and potential kernel memory copies.
+Understanding the data paths, architecture, and implementation of network planes for RDMA itself is critical for understanding how and why these various RDMA in containers solutions work and will therefore be explained.
 
+\subsubsection{Data Plane}
+While traditional host networking relies on kernel syscalls and interrupts as a communication channel for signalling packet sends and receives, RDMA instead utilizes in-memory queues that live in regions of memory explicitly shared between the user-space process and the NIC\footnote{the NIC using IOMMU to directly access memory without CPU interposition} as its data plane communication channel.
+A user-space process will write a \textit{work request} (WR) to the designated TX Queue to initiate a message\footnote{in contrast to TCP and UDP where the user-space process handles chunking a message into packets, RDMA operations post full messages and the NIC handles chunking the message into packets} send.
+The NIC will spin-loop on these shared-memory queues to detect when a work request has been posted.
+Inside of this work request will be a fat pointer\footnote{fat pointers being a pointer with extent information} to another region of shared memory --- this being the actual message payload.
+The NIC will consume the posted work request, read the payload directly from memory (a process known as Direct Memory Access or DMA), then transmit the payload over the wire, all without any kernel or CPU interposition.
+The user-space process is then notified of whether that message send succeeded or not by a \textit{completion queue event} (CQE) that is posted by the NIC to the designated Completion Queue.
 
-Control plane operations are also moved into interactions with the \textttt{sysfs} / \texttt{udev} systems on Linux.
+Following this, a user-space process can receive messages by posting a \textit{receive request} (RR) to the designated RX Queue, with these requests containing fat pointers to writable buffers in shared memory.
+Only after a receive request with a memory buffer large enough has been posted will a NIC accept an incoming message.
+When an incoming message is accepted, the NIC will similarly write the incoming payload to the specified shared-memory buffer found in the receive request~\cite{rdmaawareprogramming}.
 
-current top-of-the-line RDMA enabled NICs are capable of achieving sub-1\si{\micro\second} latency with >100Gb/s flows~\cite{mellanoxcx6doc}~[ADDITIONAL CITE].
-Due these impressive latency and throughput characteristics, it has become widely adopted across the high performance computing world~\cite{kim2019freeflow} [ADDITIONAL CITE].
+It is worth noting that what is described above is technically considered \textit{two-sided} RDMA operations (these use the verbiage \textit{send} and \textit{receive}).
+RDMA is also capable of \textit{one-sided} operations that consist of directly reading and writing the memory of the remote host (these use the verbiage \textit{write} and \textit{read}) without the remote host being involved in or aware of such operations, i.e.\ the remote user-space process does not need to post receive requests.
+These one-sided operations follow a nearly identical data path to two-sided operations, minus the need for the RX Queue.
 
-% In contrast, traditional Linux networking relies on the kernel to manage the control plane and data plane, with user-space applications initiating operations using \texttt{syscall}s.
-% In contrast, even with aggressive tuning, the Linux network stack appears to be capable of achieving only a minimum latency of 30\si{\micro\second} and a maximum of 100Gb/s flows with currently top-of-the-line Ethernet NICs~\cite{cloudflarelowlatency}~\cite{intel800nic}.
+\begin{figure}
+   \resizebox{\linewidth}{!}{
+      \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+         \input{rdmatwosided.tikz}
+      \end{tikzpicture}
+   }
+   \caption{Diagram of RDMA's data paths}
+\end{figure}
 
-% RDMA achieve kernel-bypass by first, having user-space applications initiate control-plane operations via character devices, and second, initiating data plane operations through memory sharing.
+\subsubsection{Control Plane}
+With the data plane split between shared-memory and the NIC, it then follows that the majority of the RDMA control plane must also live between shared-memory and the NIC\@.
+This, in conjunction with RDMA having a different implementation for each network fabric, results in the RDMA control plane having a radically different paradigm than that of traditional host networking.
+There are four key pieces that make up the RDMA control plane: the RDMA API library and device drivers, connection state, routing information, and interface management (i.e.\ multiplexing).
 
-\subsection{Containers and Container Networking}
-% Containers and when they're used
-% Why is virtualized networking slow?
-% What is RDMA networking.
-% HPC applications tend to make heavy use of specialized, highly performant network fabrics like Infiniband to shuffle data back and forth between different hosts.
-% Further, these applications also often utilize RDMA to bypass the kernel's networking stack.
-% Unfortunately, many container runtimes rely on the kernel's networking stack to create a \textit{virtualized} networking stack for enforcing network isolation.
+First, user-space processes utilize RDMA through a library known as \texttt{libibverbs}, which provides a central API for RDMA use regardless of network fabric~\cite{rdmacoredocumentation}.
+This library handles both data plane operations, such as creating work requests or polling the completion queue, and control plane operations such as device metadata queries, queue creation and instantiation, or registration of shared memory with the NIC\@.
+However, while data plane operations use the shared-memory regions as a communication channel, most control plane operations cannot do the same.
+For example, these operations may involve the actual creation or manipulation of the shared memory region, or may be invoked when a shared memory region does not exist.
+Thus, device drivers must be used as a communication channel for these operations.
+This is, critically, one of two times the kernel is involved in RDMA operations\footnote{these operations tend to be so infrequent they incur almost no network performance penalty}.
+Alongside \texttt{libibverbs} are drivers for the NIC itself;
+these drivers expose character device files (usually in \texttt{/dev/infiniband} and/or \texttt{/sys/class/infiniband}) that user-space processes can interact with\footnote{usually with \texttt{read}, \texttt{write}, or \texttt{ioctl} syscalls, which is what results in the kernel / driver involvement} as a control plane communication channel to the NIC~\cite{linuxkernellibibverbs}.
+Thus, all RDMA operations are initiated with \texttt{libibverbs}, which then feed into either shared memory for data plane operations or device drivers using character devices for control plane operations.
 
-% To decrease the bottleneck that is multi-machine communication, these workloads tend to heavily utilize a networking technology called Remote Direct Memory Access (RDMA); a form of kernel bypass networking that allows for access to a remote host's memory with extremely low latency and high throughput.
-% However, container runtimes rely on the kernel's network stack to create a ``virtualized'' overlay network for enforcing network isolation, thus any kernel bypass networking solutions would seem to be incompatible with existing container network stacks~\cite{abbasi2019performance}.
-% While containers can be run without network isolation in a mode called ``host networking'' that allow for the direct use of the RDMA network interface inside of containers, this reduces portability and disables network isolation, eliminating many of the benefits of containers~\cite{dockerhostnetworking}.
+\begin{figure}
+   \resizebox{\linewidth}{!}{
+      \includegraphics{libibverbsstack.png}
+   }
+   \caption{\texttt{libibverbs} stack}
+   \caption*{Source:~\cite{mlnxofedmanual}}
+\end{figure}
 
-% These solutions can generally categorized as either software based/paravirtualized or hardware-based.
-% Software based/paravirtualized solutions generally either entirely emulate an RDMA NIC or use software for just the control plane of the NIC, however they tend to be more resource intensive and struggle to provide the full performance capability of the underlying hardware.
-% Hardware based solutions rely on features built into the NIC hardware itself, however they tend not to be generalizable to commodity hardware, are less flexible, and suffer scaling issues due to limited hardware resources.
+Second, RDMA maintains a notion of connection state, similar to that of TCP, stored in a structure known as \texttt{ibv\_qp}\@.
+This structure contains fields such as \texttt{qp\_num}, \texttt{ibv\_device}, \texttt{dest\_qp\_num}, and \texttt{dlid} / \texttt{dgid}\footnote{these are an abstracted form of layer-2 and layer-3 addresses respectively for use on all network fabrics}.
+These are, in respective order, analogous to local port, local IP, remote port, and remote IP in a TCP connection, and tell the NIC to which machine and to which receive queue on that machine all work requests in a specific TX queue should go to.
+Further, this structure also contains fields such as \texttt{ibv\_pd} which specify which regions of shared memory a remote host can access using a set of generated cryptographic keys.
 
-% The reason for this lack of support is two-fold.
+However, there is the issue of how some of the state in this structure --- specifically \texttt{dest\_qp\_num}, \texttt{dlid} / \texttt{dgid}, pointers to remote memory, and the cryptographic keys for accessing those regions of remote memory --- is populated.
+The RDMA protocol itself does not specify how to share this state and is thus deferred to standard networking facilities, this being the second time the kernel is involved in RDMA operations.
+The user-space process can either manually populate and share this state over a standard protocol like TCP, or use the \texttt{rdmacm} facilities (having its own library and character devices) which handles the full creation of \texttt{ibv\_qp} using the most appropriate network protocol.
+Once this state is populated, this structure is then registered with the NIC~\cite{rdmacoredocumentation,rdmaawareprogramming}.
+
+Third, RDMA-capable NICs are, first and foremost, standard NICs and thus have at least minimal support for routing capabilities.
+On Ethernet fabrics, this means that at the hardware layer (ergo being exposed to the RDMA control plane) the RDMA-capable NIC has a MAC address and, in many cases, support for VLAN tagging.
+These properties are used by the now outdated RDMA protocol RoCE v1, which allowed for RDMA over a single Ethernet broadcast domain.
+Now, a MAC address alone does not suffice for standard networking, thus the host networking stack adds an IP layer on top of this for layer-3 routing.
+Normally, this IP layer exists solely in the host's software, but drivers for the RDMA-capable Ethernet NICs have added functionality to expose IP addresses and VLAN tags to the NIC, which are then stored in the NIC's GID table.
+These are then accessible to the RDMA control plane and are used by the RDMA protocol RoCE v2 that encapsulates RDMA packets inside of UDP packets for IP routable RDMA\@.
+On Infiniband fabrics, the story is more straight forward.
+In contrast to Ethernet NICs, most of the Infiniband networking logic lives on the NIC hardware (these Infiniband NICs being formally called HCAs), thus much of the Infiniband interface information --- such as its Local Identifier (LID), a layer-2 address, and Global Identifier (GID), a layer-3 address --- is stored on the NIC and is accessible to the RDMA control plane~\cite{mlnxofedmanual}.
+However, for both Ethernet and Infiniband, routing information --- specifically subnet mask, gateway address, and which interface to send out of --- is not exposed by the kernel or drivers to the NIC\@.
+Thus, the user-space process shares these remaining pieces of required routing information using the \texttt{ibv\_ah\_attr} and \texttt{ibv\_global\_route} structures, which are nested inside of \texttt{ibv\_qp}~\cite{rdmaawareprogramming}.
+
+Support beyond these minimal routing capabilities for the RDMA control plane, such as firewalls at the host level and complex routing rules, is dependent on the features the NIC itself provides as these would have to be executed in the NIC's hardware.
+This results in widely varying capabilities of the RDMA control plane depending on the NIC used --- a point that will be pertinent when discussing the various RDMA in container solutions.
+Regardless, even if the NIC does not support some RDMA control plane functionality, an option may be to enforce it at the network level if the network fabric supports it.
+
+Finally, RDMA-capable NICs tend to support the creation of multiple interfaces on top of a single NIC using both software and hardware based multiplexing.
+The exact capabilities and functionality of this multiplexing is, again, dependent on what the NIC or NIC driver provides;
+however, in general, software based multiplexing is managed by the kernel and integrates with the NIC using the aforementioned sharing and storage of IP addresses and VLAN tags to the NIC's GID table.
+When a new interface or IP address assignment is created in the kernel (using commands like \texttt{ip addr add}), this creates a new entry in the NIC's GID table, which can then be used for both RDMA connection state sharing (using the kernel's interface abstraction), and for RDMA sends and receives (by specifying this new GID in the \texttt{ibv\_device} structure).
+
+Hardware-based multiplexing, in general, uses Single Root I/O Virtualization (SR-IOV) which allows a single NIC (called the Physical Function or PF) to expose itself as multiple PCIe devices (each called a Virtual Function or VF).
+These PCIe devices will appear as unique hardware network devices (as opposed to a software abstraction) to the kernel or hypervisor that can be handed out to individual virtual machines or isolated in namespaces.
+On Ethernet, these VFs will appear as unique interfaces to the network, each with its own MAC address and, on some NICs, can have VLAN restrictions set on them by the host VM that cannot be overridden by the guest VM\@.
+On Infiniband, the network is not made aware of each VF (formally called a vHCA), and the PF handles switching from the network fabric to each individual VF\@.
+SR-IOV provides another form of virtualization, often useful in the context of virtual machines, but does suffer from hardware constraints as it relies on available hardware resources.
+For example, the number of possible VFs is usually capped to under 150; use of VFs on Ethernet NICs can result in IP address exhaustion; and VFs will usually share the PF's GID table, which has a fixed size, meaning GID table entry exhaustion --- which would result in the disabling of RDMA on some VFs --- is a real possiblity~\cite{mlnxofedmanual}.
+
+\subsubsection{Management Plane}
+The management plane for RDMA, which is integrated in the management plane for the NICs themselves, is then relatively straight forward.
+Similar to control plane operations, character devices and device drivers are used as the communication channel for management plane operations, with libraries like \texttt{libibumad} being used to define the communication data types.
+User tools like \texttt{ibstat} or \texttt{ibdiag}, as well as network managers like Infiniband's Subnet Manager, will use these libraries to reconfigure NIC policies.
+These character devices can also be hidden from user-space processes as a method to prohibit NIC policy configuration.
+
+Recently, RDMA-capable NIC device drivers have begun adding functionality to existing kernel systems to allow for minimal NIC and RDMA policy configuration with native OS tools like \texttt{devlink} and iproute2.
+This has allowed for some native compatibility with existing kernel systems, like using capabilities to control IP assignment on RDMA-capable NICs~\cite{mlnxofedmanual}.
+However, it still remains that the majority of the kernel's data plane and control plane systems, such as \texttt{iptables}/\texttt{nftables}/netfilter, are not exposed to the RDMA-capable NIC and are thus invalid in the context of RDMA operations.
+
+\subsection{Containers}\label{subsec:Containers}
+Containers are, as mentioned previously, a Linux-based packaging and deployment framework for complex applications.
+Reminiscent of a unikernel, containers provide portable runtime environments, strong isolation, and fine grain access control to kernel resources for user-space processes.
+These are accomplished with a combination of several Linux kernel systems.
+
+First, for portable runtime environments.
+Containers are bundled as \textit{container images}, which contains a file system\footnote{usually a union file system to allow for deduplication across multiple container images} that holds all runtime dependencies and binaries for the application, much like a static binary.
+The kernel will then isolate the application process to this environment using \texttt{chroot}, or something similar like \texttt{pivot\_root}, such that the application can view only the provided file system and will be restricted from viewing the host's file system~\cite{dockerunderthehood}.
+
+Second, for strong isolation.
+The Linux kernel provides \textit{namespace} functionality that allows for isolating a given process's view of kernel resources.
+For example, if a process is placed in its own PID namespace, the kernel provided \texttt{procfs} will return, to that process, information such that the process appears to be running as PID 1 and will see only it and its children in the process tree\footnote{internally, the kernel maintains a map of PIDs in process namespaces to PIDs in the root namespace for resolving the ``true'' PID of a process for operations like permission checks};
+therefore preventing the PID-namespaced process from viewing any other processes that may be running on the host.
+Similarly, other namespaces like the network namespace will return to the process an isolated view of available network resources.
+In total, the Linux kernel provides namespaces for PIDs, IPCs, Cgroups, IPCs, mounts, users, time, and hostnames (through the UTS namespace)~\cite{juliaevanscontainers,namespacesman}.
+
+Third, for fine grain access control.
+In conjunction with namespaces that can act as a rudimentary form of access control to kernel resources, the kernel provides \textit{cgroups} for resource usage limiting and monitoring; as well as \textit{capabilities} and \textit{seccomp} for restricting kernel operations and syscalls.
+Cgroups are configurable controllers in the kernel that can monitor and limit per process usage of CPU time, memory, and IO usage.
+Capabilities are a form of permission control on groups of kernel operations for processes.
+For example, removing the \texttt{CAP\_NET\_ADMIN} capability from a process will restrict it from all network configuration operations and \texttt{CAP\_IPC\_LOCK} will restrict all memory locking operations.
+Seccomp is like capabilities, but addresses individual syscalls as opposed to groups of operations, thus providing more fine grain control~\cite{juliaevanscontainers,cgroupsman}.
+
+% todo: add cite here
+As these are all systems within the kernel, this provides an extremely low overhead and fast to reconfigure form of isolation, as compared to say virtual machines.
+Hundreds of containers can feasibly run on a single system with no more overhead than that of running hundreds of processes, and these containers can be deployed at speeds similar to that of launching a new process on Linux~[CITE NEEDED].
+
+\subsubsection{Container Networking}
+Up to this point, the systems that have been described provide intra-machine isolation in that they can isolate multiple containers running on a single host.
+If a container utilizes networking, there is then the question of intra-machine isolation and access control, such as how to restrict to what hosts a container can initiate network connections with.
+These are accomplished with Linux's netfilter system (for which \texttt{iptables} or \texttt{nftables} are the front end) and general network stack (for which the iproute2 collection of tools is the front-end).
+% The Linux kernel provides the netfilter system (for which \texttt{iptables} and \texttt{nftables} is the front end) and iproute2 system for this functionality.
+
+First, netfilter provides a framework for defining network rules based on packet metadata.
+When a packet arrives or leaves an interface, the kernel will iterate over the defined netfilter rules to determine how to manipulate or restrict that packet --- for example, to act as a host-level firewall or as a NAT\@.
+The kernel also provides hooks between netfilter and cgroups to allow netfilter to tag all packets originating from a container, where these tags can then be used in netfilter rules.
+Second, the Linux network stack has several highly expressive systems for interface management, routing tables, and traffic control.
+These tools can be used to create virtual interfaces, virtual bridges, advanced routing rules (often in conjunction with netfilter rules), and traffic shaping policies on specific network interfaces~\cite{iproute2wiki,netfilterhome}.
+
+Together, netfilter and Linux's expressive network stack are used to create controllable, highly expressive, and isolated virtual networks for containers.
+Virtual interfaces will typically be created for individual containers that are then added to that container's network namespace.
+Outside of the container, that interface will often be attached to virtual bridge interfaces, as well as have netfilter, traffic control, and routing rules put in place (e.g.\ NAT on outgoing traffic), to control where to route and how to shape network traffic to or from the container.
+This allows for a wide expression of network topologies, has the benefit of being fast to configure with these all being software systems, and allows containers to be relocatable in that they can be moved to other hosts without any disruptions in service availability.
+This also ensures that the container can be restricted from viewing the host's actual network, and vice versa where the container can be hidden from the host's network.
+
+% todo: add cites here
+This should highlight why container networking is not runtime performant.
+Every packet to or from a container must traverse the Linux network stack and netfilter system at least once for every interface, virtual or not, along the container's network path.
+For example, if a container has a virtual interface, that is then connected to a virtual bridge, which is then connected to the interface for the NIC\@; that container's network traffic must traverse the Linux network stack a minimum of three times.
+With the network stack being primarily implemented in software, meaning both the control plane and data plane are in software, the performance costs explained in Section~\ref{subsec:Networking Planes} can add up.
+
+Putting it together though, this, alongside the intra-machine isolation described in Section~\ref{subsec:Containers}, provides an immense amount of power for container deployment.
+These systems are extremely quick to configure, highly expressive, and are relatively low overhead\footnote{for most users, other factors like processing time or multiple router hops overshadow the performance cost of container networks, thus container networking is usually considered low overhead}.
+Further, container engines are typically used for the actual deployment of containers, such as Docker or podman, that handle the full configuration and monitoring of the aforementioned kernel systems, and use standards for both container images and schemas to describe container deployment.
+This makes container deployments simple, consistent across machines, and scalable, which explains why containers have become so widely adopted.
+% todo: maybe something about kubernetes here?
+As a final note, it is critical to once again emphasize that these are software systems that run inside of the kernel, and thus can only influence operations whose data path cross the kernel.
 
 \subsection{Related Work}
-% However, containers are quite unique in their needs and various usage patterns, which differ significantly from those of virtual machines.
-% In particular, containers are unique in that they are (a) treated as more ephemeral constructs than VMs, (b) can be dynamically scaled up or down on one or many hosts, (c) a single host could run tens to hundreds of containers, and (d) heavily utilize software defined networking to facilitate inter-container communication.
-
-% In particular, containers are unique in several key ways:
-% \begin{itemize}
-%    \item Containers are treated as ephemeral
-%    \item A single machine could run tens to potentially hundreds of containers
-%    \item Container networking is nearly all software-defined
-% \end{itemize}
-
 \subsubsection{RDMA Namespaces and Cgroups}
-With namespaces and cgroups being the standard systems for container isolation in the Linux kernel, there have been developments to add RDMA implementations of these to the Linux kernel itself~\cite{rdmanamespace}~\cite{rdmacgroups}~\cite{mellanoxcontainersupdate2018}.
+With namespaces and cgroups being the standard systems for container isolation in the Linux kernel, there have been developments to add RDMA support for these to the Linux kernel itself.
+
+\cite{rdmanamespaceman,rdmacgroups,mellanoxcontainersupdate2018}.
 
 \subsubsection{Sharing RDMA NICs between Virtual Machines}
+There's a lot of similarities between sharing RDMA NICs between containers and virtual machines.
+There are some differences though:
+
+In particular, containers are unique in several key ways:
+\begin{itemize}
+   \item Containers are treated as ephemeral -> need fast reconfigurability
+   \item A single machine could run tens to potentially hundreds of containers
+   \item Containers are relocatable
+   \item Container networking is nearly all software-defined
+\end{itemize}
+
 \subsubsection{Programmable NICs}
+Microsoft's FPGAs in Azure and Brent Stephen's work.
+This work is started to show up in RDMA capable NICs (e.g.\ ConnectX-6).
+
 \subsubsection{eBPF Container Networking}
+Projects like Cilium and Calico are using eBPF to eliminate context switch overheads in virtual networks.
+This adds some speed ups, but still suffers from the other overheads mentioned in Section~\ref{subsec:Networking Planes}.
+
 \subsubsection{DPDK in Containers}
+Another form of kernel bypass networking.
 
 \section{Overview}
 
+% what to call this other than paravirtualized?
+\subsection{Paravirtualized Solutions: Microsoft Freeflow and MasQ}
+Keep the data plane in tact, but high jack the control plane.
+Requires keeping up to date with the libibverbs package.
+
+In general, these sections should go:
+\begin{itemize}
+   \item Table/Paragraph lists with Container Network Properties
+   \item Graphs and commentary on RDMA performance
+   \item Table/Paragraph lists on other comments like proprietary-ness
+\end{itemize}
+
+\subsection{Hardware Solutions: Mellanox Shared HCAs and SRIOV}
+Implement more control plane flexibility in the NIC hardware.
+
+Shared HCA and SRIOV overhead is already negligible, but is there any performance hits to using ASAP Offload?
+
+\subsection{Software Solutions: SoftRoCE}
+Just sucks for performance, really isn't meaningful to measure.
+Should only be used if compatibility with existing RDMA networks is required, but performance is not.
+
 \section{Discussion}
 \subsection{Security}
-% Looking forward
+The RDMA protocol itself doesn't support encryption, required by the NIC for any meaningful performance.
+
+\subsection{Looking Forward}
+Microsoft Freeflow and MasQ high jack the \texttt{libibverbs} libraries, why not high jack the character devices themselves?
+Why not high jack just rdmacm itself?
+Actually, I think Mellanox might be going this direction with shared HCAs.
+They are kind of acting like ``proxy'' HCAs.
+
+Likely moving more toward hardware implementations -> more proprietary.
+
+Likely merging more RDMA NIC configurations into kernel drivers to get container support for free, iow interacting with RDMA NICs similarly to standard Ethernet NICs.
 
 \section{Conclusion}
+If you can afford it, NICs with hardware support for container topologies seem to be the best option for flexibility, support, and performance.
+You are at the mercy of Mellanox though.
+
+The paravirtualized solutions seem like a good alternative, but they require a lot of maintenance to keep up to date, especially with how complex and industry-driven the RDMA code base is.
 
 
 \nocite{*}
@@ -219,11 +405,4 @@ With namespaces and cgroups being the standard systems for container isolation i
 \pagebreak
 \section*{Appendix}
 \appendix
-\section{RDMA Two-Sided Ops Diagram}
-\renewcommand{\baselinestretch}{1.15}
-\resizebox{\textwidth}{!}{
-   \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
-      \input{rdmatwosided.tikz}
-   \end{tikzpicture}
-}
 \end{document}

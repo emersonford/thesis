@@ -243,6 +243,6 @@ qp\_num, dest\_qp\_num, ah\_attr (gid), ...
 % Text Node
 \draw (512,258) node [anchor=north west][inner sep=0.75pt]  [font=\tiny] [align=left] {ibv\_qp};
 % Text Node
-\draw (116,-8) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {protection domain$\displaystyle ^{0}$};
+\draw (116,-8) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {protection domain};
 % Text Node
-\draw (496,-8) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {protection domain$\displaystyle ^{0}$};
+\draw (496,-8) node [anchor=north west][inner sep=0.75pt]  [font=\scriptsize] [align=left] {protection domain};
