@@ -17,3 +17,11 @@
     - connectx3
   vars:
     group_name: connectx3
+
+- name: configure ConnectX-5 nodes
+  hosts: connectx5
+  roles:
+    - docker
+    - mellanox
+  vars:
+    group_name: connectx5

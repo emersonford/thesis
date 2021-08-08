@@ -1,5 +1,23 @@
 ---
 - name: Run mlnxofedinstall
-  shell: 'echo "y" | ./mlnxofedinstall && /etc/init.d/openibd restart'
+  shell: './mlnxofedinstall --without-fw-update --force && /etc/init.d/openibd restart'
   args:
     chdir: '~/{{ mellanox_ib_driver_name }}'
+  async: 1800
+  poll: 0
+  register: mlnxofedinstall_task
+  notify: Wait for mlnxofedinstall
+
+- name: Wait for mlnxofedinstall
+  async_status:
+    jid: "{{ mlnxofedinstall_task.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 60
+  delay: 30
+  notify: Clean up mlnxofedinstall
+
+- name: Clean up mlnxofedinstall
+  async_status:
+    jid: "{{ mlnxofedinstall_task.ansible_job_id }}"
+    mode: cleanup

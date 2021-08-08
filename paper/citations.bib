@@ -60,6 +60,98 @@
   keywords = {highperfnetworking},
 }
 
+@inproceedings{firestone2018azure,
+  title={Azure accelerated networking: Smartnics in the public cloud},
+  author={Firestone, Daniel and Putnam, Andrew and Mundkur, Sambhrama and Chiou, Derek and Dabagh, Alireza and Andrewartha, Mike and Angepat, Hari and Bhanu, Vivek and Caulfield, Adrian and Chung, Eric and others},
+  booktitle={15th $\{$USENIX$\}$ Symposium on Networked Systems Design and Implementation ($\{$NSDI$\}$ 18)},
+  pages={51--66},
+  year={2018},
+  keywords = {highperfnetworking},
+}
+
+@inproceedings{stephens2019loom,
+  title={Loom: Flexible and efficient $\{$NIC$\}$ packet scheduling},
+  author={Stephens, Brent and Akella, Aditya and Swift, Michael},
+  booktitle={16th $\{$USENIX$\}$ Symposium on Networked Systems Design and Implementation ($\{$NSDI$\}$ 19)},
+  pages={33--46},
+  year={2019},
+  keywords = {highperfnetworking},
+}
+
+@inproceedings{katsikas2021you,
+  title={What You Need to Know About (Smart) Network Interface Cards},
+  author={Katsikas, Georgios P and Barbette, Tom and Chiesa, Marco and Kostic, Dejan and Maguire Jr, Gerald Q},
+  booktitle={PAM},
+  pages={319--336},
+  year={2021},
+  keywords = {highperfnetworking},
+}
+
+@article{liu2021performance,
+  title={Performance Characteristics of the BlueField-2 SmartNIC},
+  author={Liu, Jianshen and Maltzahn, Carlos and Ulmer, Craig and Curry, Matthew Leon},
+  journal={arXiv preprint arXiv:2105.06619},
+  year={2021},
+  keywords = {highperfnetworking},
+}
+
+@inproceedings{kim2020case,
+  title={A Case for SmartNIC-accelerated Private Communication},
+  author={Kim, Duckwoo and Lee, SeungEon and Park, KyoungSoo},
+  booktitle={4th Asia-Pacific Workshop on Networking},
+  pages={30--35},
+  year={2020},
+  keywords = {highperfnetworking},
+}
+
+@article{ciliumiptablesebpf,
+  title = {Why is the kernel community replacing iptables with BPF?},
+  organization = {Cilium},
+  url = {https://cilium.io/blog/2018/04/17/why-is-the-kernel-community-replacing-iptables},
+  date = {2018-04-17},
+  keywords = {highperfnetworking},
+}
+
+@article{ciliumebpf,
+  title = {eBPF - The Future of Networking \& Security},
+  organization = {Cilium},
+  url = {https://cilium.io/blog/2020/11/10/ebpf-future-of-networking/},
+  date = {2020-11-10},
+  keywords = {highperfnetworking},
+}
+
+@article{dpdkcontainers,
+  title = {Implementing DPDK based Application Container Framework with SPP},
+  author = {Ogawa, Yasufumi},
+  organization = {NTT},
+  url = {https://www.dpdk.org/wp-content/uploads/sites/35/2018/12/YasufumiOgwa_Implementing-DPDK-based-Application-Container-Framework-with-SPP.pdf},
+  year = {2018},
+  month = {12},
+  keywords = {highperfnetworking},
+}
+
+@article{inteldpdk,
+  title = {Accelerate Container Networking with Data Plane Development Kit (DPDK)},
+  author = {Hu, Jiayu},
+  organization = {Intel},
+  date = {2018-10-22},
+  url = {https://software.intel.com/content/www/us/en/develop/articles/accelerate-container-networking-with-dpdk.html},
+  keywords = {highperfnetworking},
+}
+
+
+@INPROCEEDINGS{dpdkperformancecontainers,
+  author={Nguyen, Quang-Huy and Kim, Younghan},
+  booktitle={2020 International Conference on Information and Communication Technology Convergence (ICTC)},
+  title={Performance of OVS-DPDK in Container Networks},
+  year={2020},
+  pages={437-440},
+  doi={https://doi.org/10.1109/ICTC49870.2020.9289483},
+  keywords = {highperfnetworking},
+}
+
+
+
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % Kernel Bypass Networking %
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -193,6 +285,16 @@
   keywords = {containernetworking},
 }
 
+@article{dockercontainernetwork,
+  title = {Understanding Docker Networking Drivers and their use cases},
+  author = {Church, Mark},
+  organization = {Docker},
+  date = {2016-12-19},
+  url = {https://www.docker.com/blog/understanding-docker-networking-drivers-use-cases/},
+  keywords = {containernetworking},
+}
+
+
   %%%%%%%%%%%%%%%%%%%%%%
   % RDMA in Containers %
   %%%%%%%%%%%%%%%%%%%%%%
@@ -282,6 +384,14 @@
   keywords = {rdmacontainers},
 }
 
+@article{rdmacmnspatch,
+  title = {Add network namespace support in the RDMA-CM},
+  author = {Eran, Haggai},
+  url = {https://lwn.net/Articles/644940/},
+  date = {2015-05-17},
+  keywords = {rdmacontainers},
+}
+
   %%%%%%%%%%%%%%%%%
   % RDMA Research %
   %%%%%%%%%%%%%%%%%
@@ -362,13 +472,34 @@
 @inproceedings{mellanoxcontainersupdate2018ofa,
   title = {RDMA Containers Update},
   author = {Pandit, Parav},
-  month = {Apr},
+  month = {4},
   year = {2018},
   organization = {Mellanox},
   booktitle = {Proceedings of the 14th OFA Workshop},
   url = {https://www.openfabrics.org/images/2018workshop/presentations/115_PPandit_RoCEContainers.pdf},
   keywords = {rdmaresearch},
 }
+
+@inproceedings{mlnxrdmadeviceisolation,
+  title = {RDMA Device Isolation},
+  organization = {Mellanox Technologies},
+  author = {Pandit, Parav and Goldenberg, Dror},
+  booktitle = {Proceedings of the 2019 ISC Container Workshop, Frankfurt},
+  year = {2019},
+  month = {6},
+  keywords = {rdmaresearch},
+}
+
+@online{mlnxcontainerjourney,
+  title = {Mellanox Container Journey},
+  organization = {Mellanox Technologies},
+  author = {Pandit, Parav and Goldenberg, Dror},
+  year = {2019},
+  month = {6},
+  url = {http://qnib.org/data/hpcw19/7_END_2_MellanoxJourney.pdf},
+  keywords = {rdmaresearch},
+}
+
 
   %%%%%%%%%%%%%
   % TUTORIALS %
@@ -413,6 +544,14 @@
   keywords = {tutorial}
 }
 
+@manual{dockermacvlan,
+  title = {Use macvlan networks},
+  organization = {Docker},
+  date = {2021-08-05},
+  url = {https://docs.docker.com/network/macvlan/},
+  keywords = {tutorial}
+}
+
 @manual{mellanoxk8sroce,
   title = {RDG: RoCE accelerated K8s cluster deployment for ML and HPC workloads},
   author = {Mellanox Technologies},
@@ -437,7 +576,7 @@
   title = {Mellanox Container Journey},
   author = {Goldenberg, Dror and Pandit, Parav},
   organization = {Mellanox Technologies},
-  month = {Jun},
+  month = {6},
   year = {2019},
   url = {http://qnib.org/data/hpcw19/7_END_2_MellanoxJourney.pdf},
   keywords = {mellanox}
@@ -463,11 +602,20 @@
 }
 
 @manual{rdmacoredocumentation,
-  title = {RDMA Core Documentation},
+  title = {rdma-core Documentation},
   date = {2020-11-03},
   version = {v31.1},
   url = {https://github.com/linux-rdma/rdma-core/tree/stable-v31/Documentation},
   keywords = {documentation}
+}
+
+@online{rdmacorerepo,
+  title = {GitHub Repository - RDMA core userspace libraries and daemons},
+  organization = {linux-rdma},
+  date = {2021-08-01},
+  url = {https://github.com/linux-rdma/rdma-core},
+  version = {v36},
+  keywords = {documentation},
 }
 
 @manual{rdmaawareprogramming,
@@ -526,13 +674,26 @@
   title = {RDMA Controller},
   url = {https://www.kernel.org/doc/Documentation/cgroup-v1/rdma.txt},
   year = {2021},
-  month = {May},
+  month = {5},
   keywords = {documentation},
 }
 
   %%%%%%%%%%%%%%
   % CONTAINERS %
   %%%%%%%%%%%%%%
+
+@article{rad2017introduction,
+  title={An introduction to docker and analysis of its performance},
+  author={Rad, Babak Bashari and Bhatti, Harrison John and Ahmadi, Mohammad},
+  journal={International Journal of Computer Science and Network Security (IJCSNS)},
+  volume={17},
+  number={3},
+  pages={228},
+  year={2017},
+  publisher={International Journal of Computer Science and Network Security},
+  keywords = {containers}
+}
+
 
 @online{dockerstats,
   title = {Introducing the Docker Index: Insight from the World’s Most Popular Container Registry},
@@ -585,6 +746,7 @@
   author = {Evans, Julia},
   date = {2016-10-10},
   url = {https://jvns.ca/categories/containers/},
+  keywords = {containers},
 }
 
 @online{dockerunderthehood,
@@ -592,15 +754,14 @@
   author = {Skilbeck, John},
   date = {2021-06-18},
   url = {https://www.codementor.io/blog/docker-technology-5x1kilcbow},
+  keywords = {containers},
 }
 
 @manual{capabilitiesman,
   title = {capabilities(7)},
   booktitle = {Linux man pages},
   edition = {5.12},
-  year = {2021},
-  month = {Mar},
-  day = {22},
+  date = {2021-03-22},
   url = {https://man7.org/linux/man-pages/man7/capabilities.7.html},
   keywords = {documentation},
 }
@@ -609,9 +770,7 @@
   title = {rdma-system(8)},
   booktitle = {Linux man pages},
   edition = {5.12},
-  year = {2021},
-  month = {Mar},
-  day = {22},
+  date = {2021-03-22},
   url = {https://man7.org/linux/man-pages/man8/rdma-system.8.html},
   keywords = {documentation},
 }
@@ -620,9 +779,7 @@
   title = {cgroups(7)},
   booktitle = {Linux man pages},
   edition = {5.12},
-  year = {2021},
-  month = {Mar},
-  day = {22},
+  date = {2021-03-22},
   url = {https://man7.org/linux/man-pages/man7/cgroups.7.html},
   keywords = {documentation},
 }
@@ -631,9 +788,7 @@
   title = {namespaces(7)},
   booktitle = {Linux man pages},
   edition = {5.12},
-  year = {2021},
-  month = {Mar},
-  day = {22},
+  date = {2021-03-22},
   url = {https://man7.org/linux/man-pages/man7/namespaces.7.html},
   keywords = {documentation},
 }
@@ -641,18 +796,34 @@
 @manual{iproute2wiki,
   title = {iproute2},
   booktitle = {Linux Foundation Wiki},
-  year = {2020},
-  month = {Aug},
-  day = {08},
+  date = {2020-08-08},
   url = {https://wiki.linuxfoundation.org/networking/iproute2},
   organization = {The Linux Foundation},
+  keywords = {documentation},
 }
 
 @manual{netfilterhome,
   title = {netfilter: firewalling, NAT, and packet mangling for Linux},
   organization = {netfilter},
   url = {https://www.netfilter.org/},
-  year = {2021},
-  month = {Jul},
-  day = {28},
+  date = {2021-07-28},
+  keywords = {documentation},
+}
+
+@manual{rocev2spec,
+  title = {Supplement to InfiniBand Architecture Specification - Annex A17: RoCEv2},
+  organization = {InfiniBand Trade Association},
+  volume = {1},
+  edition = {1.2.1},
+  date = {2014-09-02},
+  url = {https://cw.infinibandta.org/document/dl/7781},
+  keywords = {documentation},
+}
+
+@manual{infinibandarch,
+  title = {IB Router Architecture and Functionality},
+  organization = {Mellanox Technologies},
+  date = {2018-12-03},
+  url = {https://community.mellanox.com/s/article/ib-router-architecture-and-functionality},
+  keywords = {documentation}
 }
