@@ -1,4 +1,7 @@
 ---
+- debug:
+    var: hostvars[groups[group_name][0]]
+
 - name: Clone Freeflow repo
   become: yes
   become_user: "{{ ansible_user }}"
@@ -11,6 +14,8 @@
     - Replace second IP in header
     - Replace first IP in cpp
     - Replace second IP in cpp
+    - Replace device idx
+    - Enable verbose logging
     - Build base Docker image
     - Build ffrouter Docker image
     - Build ffclient Docker image
@@ -23,5 +28,5 @@
     mode: '744'
     src: 'start-containers.sh'
   vars:
-    host_ip_addr: "{{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.netmask }}"
+    host_ip_addr: "{{ ansible_ens1f0.ipv4.address }}/{{ ansible_ens1f0.ipv4.netmask }}"
     freeflow_host_ip_prefix: "{{ host_ip_addr | ansible.netcommon.ipaddr('address/prefix') }}"

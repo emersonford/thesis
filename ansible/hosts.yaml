@@ -9,9 +9,13 @@ all:
     connectx4_node2:
       ansible_host: hp200.utah.cloudlab.us
     connectx5_node1:
-      ansible_host: amd026.utah.cloudlab.us
+      ansible_host: amd266.utah.cloudlab.us
     connectx5_node2:
-      ansible_host: amd014.utah.cloudlab.us
+      ansible_host: amd254.utah.cloudlab.us
+    connectx5_node3:
+      ansible_host: amd009.utah.cloudlab.us
+    connectx5_node4:
+      ansible_host: amd008.utah.cloudlab.us
   vars:
     ansible_user: emerso0
     ansible_become: yes
@@ -35,5 +39,12 @@ all:
         connectx5_node1:
         connectx5_node2:
       vars:
-        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-5.4-1.0.3.0-ubuntu20.04-x86_64'
-        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-5.4-1.0.3.0/MLNX_OFED_LINUX-5.4-1.0.3.0-ubuntu20.04-x86_64.tgz'
+        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-5.4-3.0.3.0-ubuntu20.04-x86_64'
+        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-5.4-3.0.3.0/MLNX_OFED_LINUX-5.4-3.0.3.0-ubuntu20.04-x86_64.tgz'
+    connectx5_old:
+      hosts:
+        connectx5_node3:
+        connectx5_node4:
+      vars:
+        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-4.9-4.0.8.0-ubuntu20.04-x86_64'
+        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-4.9-4.0.8.0/MLNX_OFED_LINUX-4.9-4.0.8.0-ubuntu20.04-x86_64.tgz'

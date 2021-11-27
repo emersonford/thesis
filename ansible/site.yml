@@ -23,5 +23,15 @@
   roles:
     - docker
     - mellanox
+    - freeflow
   vars:
     group_name: connectx5
+
+- name: configure ConnectX-5 nodes
+  hosts: connectx5_old
+  roles:
+    - docker
+    - mellanox
+    - freeflow
+  vars:
+    group_name: connectx5_old

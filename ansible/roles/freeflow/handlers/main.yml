@@ -3,7 +3,7 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.h'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][0]]["ansible_default_ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][0]]["ansible_ens1f0"]["ipv4"]["address"] }}'
   loop:
     - '192[.]168[.]2[.]13'
 
@@ -11,7 +11,7 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.h'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][1]]["ansible_default_ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][1]]["ansible_ens1f0"]["ipv4"]["address"] }}'
   loop:
     - '192[.]168[.]2[.]14'
 
@@ -19,19 +19,31 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.cpp'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][0]]["ansible_default_ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][0]]["ansible_ens1f0"]["ipv4"]["address"] }}'
   loop:
-    - '10[.]47[.]0[.]4'
     - '192[.]168[.]2[.]13'
+    - '10[.]47[.]0[.]4'
 
 - name: Replace second IP in cpp
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.cpp'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][1]]["ansible_default_ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][1]]["ansible_ens1f0"]["ipv4"]["address"] }}'
   loop:
-    - '10[.]47[.]0[.]5'
     - '192[.]168[.]2[.]14'
+    - '10[.]47[.]0[.]5'
+
+- name: Replace device idx
+  replace:
+    path: '~{{ ansible_user }}/Freeflow/ffrouter/rdma_api.cpp'
+    regexp: 'return dev_list[[]0[]];'
+    replace: 'return dev_list[2];'
+
+- name: Enable verbose logging
+  replace:
+    path: '~{{ ansible_user }}/Freeflow/ffrouter/log.h'
+    regexp: '#define LOG_LEVEL 10'
+    replace: '#define LOG_LEVEL 1'
 
 - name: Build base Docker image
   become: yes
