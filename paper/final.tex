@@ -42,7 +42,7 @@ Honors Computer Science Bachelor's Thesis}
 \section*{Abstract}
 Containers are an increasingly popular packaging framework for complex applications, offering benefits such as lightweight isolation, portability, and ease of deployment.
 These benefits have the potential to solve a myriad of issues that have long been present in the high performance computing world, presenting a compelling narrative for their use in these environments.
-Unfortunately, by default, standard container runtimes rely on relatively slow, virtualized network stacks to achieve network isolation and portability, which are incompatible with the kernel bypass networking technology RDMA\@.
+Unfortunately, standard container runtimes rely on relatively slow, virtualized network stacks to achieve network isolation and portability, which are incompatible with the kernel bypass networking technology RDMA\@.
 This has limited the widespread adoption of containers in high performance computing environments where RDMA-reliant applications are quite common.
 
 Recent projects such as FreeFlow and Mellanox's RDMA hardware have created solutions for enabling RDMA inside of containers while maintaining varying degrees of the benefits of standard containers.
@@ -68,10 +68,10 @@ Due to this, these network stacks are fundamentally incompatible with RDMA which
 
 While it is possible to run containers without container networking by exposing the host's NIC directly to running containers (a mode called ``host networking''), this comes with several notable disadvantages:
 \begin{enumerate*}[label={(\arabic*)},itemjoin*={{, and }},itemjoin={{, }}]
-   \item controlling fair sharing of the RDMA-capable NIC between multiple containers cannot be done programmatically
-   \item containers are not relocatable/portable across multiple hosts
-   \item common container orchestration tools like Kubernetes cannot be used
-   \item network isolation and network routing policies for containers is disabled
+	\item controlling fair sharing of the RDMA-capable NIC between multiple containers cannot be done programmatically
+	\item containers are not relocatable/portable across multiple hosts
+	\item common container orchestration tools like Kubernetes cannot be used
+	\item network isolation and network routing policies for containers is disabled
 \end{enumerate*}.
 Thus, while this mode may be a viable for some environments, it is not adequate for the vast majority of container environments --- such as those that utilize Kubernetes heavily --- and additional solutions for enabling RDMA in containers are still needed.
 
@@ -87,38 +87,38 @@ these properties being grouped in two main categories:
 \noindent
 \textbf{Container RDMA Network Properties:}
 \begin{itemize}[nolistsep]
-   % todo: reiterate what container IP means, should be the IP is not exposed to the network? not sure, this overlaps
-   % with network pressure perhaps
-   % maybe clarify this is intra-machine network isolation
-   \item \textit{Network Isolation}: each container has its own interface, routing tables, and network policies (also known as a network namespace); further, a container's IP should not inherently depend on the underlying NIC's network
-   \item \textit{Controllability}: enforcing routing policies and traffic shaping on a container with an RDMA-capable NIC
-   % maybe clarify this is host resource utilization
-   \item \textit{Resource Utilization}: container networks should not be CPU or memory intensive
+	% todo: reiterate what container IP means, should be the IP is not exposed to the network? not sure, this overlaps
+	% with network pressure perhaps
+	% maybe clarify this is intra-machine network isolation; external view and internal view? 
+	\item \textit{Network Isolation}: each container has its own interface, routing tables, and network policies (also known as a network namespace); further, a container's IP should not inherently depend on the underlying NIC's network
+	\item \textit{Controllability}: enforcing routing policies and traffic shaping on a container with an RDMA-capable NIC
+		% maybe clarify this is host resource utilization
+	\item \textit{Resource Utilization}: container networks should not be CPU or memory intensive
 \end{itemize}
 
 \noindent
 \textbf{RDMA Properties:}
 \begin{itemize}[nolistsep]
-   \item \textit{Throughput}: how closely can a solution match host RDMA throughput
-   \item \textit{Latency}: what latency overhead is incurred per message for a given solution
+	\item \textit{Throughput}: how closely can a solution match host RDMA throughput
+	\item \textit{Latency}: what latency overhead is incurred per message for a given solution
 \end{itemize}
 
 \noindent
 and analyzed with varying levels of:
 \begin{itemize}[nolistsep]
-   \item number of containers present across the cluster and on a single host
-   \item message size of network payloads
-   \item messages sent per second
+	\item number of containers present across the cluster and on a single host
+	\item message size of network payloads
+	\item messages sent per second
 \end{itemize}
 which should adequately test the scalability of these properties.
 Finally, comments will also be made on:
 \begin{itemize}[nolistsep]
-   \item \textit{Scalability Limits}: are there hardware or software limits on the NIC for scalability
-   \item \textit{Proprietary}: can a solution be used across various RDMA-capable NIC vendors
-   \item \textit{Maturity}: what support exists for a solution, how well tested is a solution
-   \item \textit{Ease in Deployment}: are application changes necessary for a solution, how difficult is it to deploy the solution
-   \item \textit{Execution Privileges}: can the solution be used without elevated capabilities such as \texttt{CAP\_SYS\_ADMIN}
-   \item \textit{Network Pressure}: what additional pressure do these solutions put on the network
+	\item \textit{Scalability Limits}: are there hardware or software limits on the NIC for scalability
+	\item \textit{Proprietary}: can a solution be used across various RDMA-capable NIC vendors
+	\item \textit{Maturity}: what support exists for a solution, how well tested is a solution
+	\item \textit{Ease in Deployment}: are application changes necessary for a solution, how difficult is it to deploy the solution
+	\item \textit{Execution Privileges}: can the solution be used without elevated capabilities such as \texttt{CAP\_SYS\_ADMIN}
+	\item \textit{Network Pressure}: what additional pressure do these solutions put on the network
 \end{itemize}
 to assist in determining if a given environment can even support a given solution.
 
@@ -151,7 +151,7 @@ This provides an extremely high degree of flexibility and configurability for th
 As a result, this incurs performance penalties from the overhead of context switches, memory copies from user-space to kernel-space (or from RAM to CPU to the network device), and from simply being software (i.e.\ not being hardware accelerated or run on FPGAs).
 On top of this, use of standard network protocols like TCP may exacerbate the performance penalties due to higher code complexity, built in retries and throttling, and protocol header overhead.
 
-\subsection{RDMA Networking}
+\subsection{RDMA Protocol}\label{subsec:RDMA Protocol}
 Remote Direct Memory Access (RDMA) is an aptly named network protocol designed for the direct reading and writing of the memory of remote hosts with extremely low latency, high bandwidth, and minimal CPU overhead.
 Support for it has been added to a number of parallel applications and libraries, such as TensorFlow and OpenMPI, and has seen wide spread adoption in the high performance computing world where it is run on top of either Infiniband or Ethernet~\cite{kim2019freeflow}.
 At its core, RDMA is a form of kernel-bypass networking in that it shifts almost all of the data plane and control plane from the kernel to a combination of user-space and the network card.
@@ -184,12 +184,12 @@ RDMA is also capable of \textit{one-sided} operations that consist of directly r
 These one-sided operations follow a nearly identical data path to two-sided operations, minus the need for the RX Queue.
 
 \begin{figure}
-   \resizebox{\linewidth}{!}{
-      \begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
-         \input{rdmatwosided.tikz}
-      \end{tikzpicture}
-   }
-   \caption{Diagram of RDMA's data paths}
+	\resizebox{\linewidth}{!}{
+		\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+			\input{rdmatwosided.tikz}
+		\end{tikzpicture}
+	}
+	\caption{Diagram of RDMA's data paths}
 \end{figure}
 
 \subsubsection{Control Plane}\label{subsubsec:Control Plane}
@@ -210,12 +210,12 @@ Thus, all RDMA operations are initiated with \texttt{libibverbs}, which then fee
 Note, these control plane operations tend to be so infrequent (e.g.\ most applications will use long running connections and thus will initiate connections rarely), the performance penalty of kernel interposition is negligible here.
 
 \begin{figure}
-   \centering
-   \resizebox{0.8\linewidth}{!}{
-      \includegraphics{libibverbsstack.png}
-   }
-   \caption{\texttt{libibverbs} stack}
-   \caption*{Source:~\cite{mlnxofedmanual}}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{libibverbsstack.png}
+	}
+	\caption{\texttt{libibverbs} stack}
+	\caption*{Source:~\cite{mlnxofedmanual}}
 \end{figure}
 
 Second, RDMA maintains a notion of connection state, similar to that of TCP, stored in a structure known as \texttt{ibv\_qp}\@.
@@ -256,7 +256,7 @@ On Infiniband, the network is not made aware of each VF (formally called a vHCA)
 SR-IOV provides another form of virtualization, often useful in the context of virtual machines, but does suffer from hardware constraints as it relies on available hardware resources.
 For example, the number of possible VFs is usually capped to under 150; use of VFs on Ethernet NICs can result in IP address exhaustion; and SR-IOV struggles with the same GID table entry exhaustion as software-based multiplexing as VFs share the same GID table as PFs, with GID table entry exhaustion resulting in the disabling of RDMA on some VFs~\cite{mlnxofedmanual}.
 
-\subsubsection{Management Plane}
+\subsubsection{Management Plane}\label{subsubsec:Management Plane}
 The management plane for RDMA, which is integrated in the management plane for the NICs themselves, is then relatively straight forward.
 Similar to control plane operations, character devices and device drivers are used as the communication channel for management plane operations, with libraries like \texttt{libibumad} being used to define the communication data types.
 User tools like \texttt{ibstat} or \texttt{ibdiag}, as well as network managers like Infiniband's Subnet Manager, will use these libraries to reconfigure NIC policies.
@@ -305,12 +305,12 @@ Second, the Linux network stack has several highly expressive systems for interf
 These tools can be used to create virtual interfaces, virtual bridges, advanced routing rules (often in conjunction with netfilter rules), and traffic shaping policies on specific network interfaces~\cite{iproute2wiki,netfilterhome}.
 
 \begin{figure}
-   \centering
-   \resizebox{0.6\linewidth}{!}{
-      \includegraphics{containernetwork.png}
-   }
-   \caption{Typical Container Network}
-   \caption*{Source:~\cite{dockercontainernetwork}}
+	\centering
+	\resizebox{0.6\linewidth}{!}{
+		\includegraphics{containernetwork.png}
+	}
+	\caption{Typical Container Network}
+	\caption*{Source:~\cite{dockercontainernetwork}}
 \end{figure}
 
 Together, netfilter and Linux's expressive network stack are used to create controllable, highly expressive, and isolated virtual networks for containers.
@@ -349,10 +349,10 @@ As such, they currently only provide intra-machine isolation but not inter-machi
 There's a significant overlap in the research of sharing RDMA NICs among containers and among virtual machines, with many of the to-be-explained solutions being compatible with both.
 However, there are some key differences when assessing RDMA NIC sharing for containers:
 \begin{enumerate*}[label={(\arabic*)},itemjoin*={{, and }},itemjoin={{, }}]
-   \item containers are often ephemeral, thus resource deployment and cleanup must be fast and low overhead
-   \item container engines use kernel functionality for isolation, meaning sharing solutions must expose themselves to the kernel in some way
-   \item a single machine could run tens to potentially hundreds of containers, as opposed to a handful of virtual machines, thus scalability is more of a concern
-   \item containers use a vastly different configuration scheme than virtual machines
+	\item containers are often ephemeral, thus resource deployment and cleanup must be fast and low overhead
+	\item container engines use kernel functionality for isolation, meaning sharing solutions must expose themselves to the kernel in some way
+	\item a single machine could run tens to potentially hundreds of containers, as opposed to a handful of virtual machines, thus scalability is more of a concern
+	\item containers use a vastly different configuration scheme than virtual machines
 \end{enumerate*}.
 Due to these differences, solutions like HyV, virtio-RDMA, and vRDMA are incompatible for use in containers and the remaining solutions must be assessed differently for containers than for virtual machines~\cite{fan2017towards,hyvpaper,vrdmavmware}.
 
@@ -362,10 +362,10 @@ Network rules, like firewalls, would be programmed into the NIC as a form of har
 This could be used to express RDMA network rules with minimal performance impact as these rules would run on the NIC itself, therefore allowing for highly-performant container RDMA network isolation.
 This too may be part of the future for RDMA device management in containers, but as of now, does not seem mature enough for container use cases or for general use as:
 \begin{enumerate*}[label={(\arabic*)},itemjoin*={{, and }},itemjoin={{, }}]
-   \item some of these NICs are not available to the public (e.g.\ Azure's programmable NICs)
-   \item many of the available programmable NICs are slow or expensive to configure
-   \item some NICs exhibit pathological performance characteristics, which is detrimental for RDMA use
-   \item these NICs do not integrate with existing kernel network isolation systems (e.g.\ netfilter), thus container engines would have to create complex shim layers to utilize these programmable NICs
+	\item some of these NICs are not available to the public (e.g.\ Azure's programmable NICs)
+	\item many of the available programmable NICs are slow or expensive to configure
+	\item some NICs exhibit pathological performance characteristics, which is detrimental for RDMA use
+	\item these NICs do not integrate with existing kernel network isolation systems (e.g.\ netfilter), thus container engines would have to create complex shim layers to utilize these programmable NICs
 \end{enumerate*}~\cite{firestone2018azure,stephens2019loom,katsikas2021you,liu2021performance,kim2020case}.
 
 \subsubsection{eBPF Container Networking}
@@ -384,9 +384,6 @@ For example, DPDK often requires heavy CPU utilization, also cannot utilize in-k
 As such, it remains an orthogonal solution to high performance networking in containers.
 
 \section{Overview}
-% todo: add section on host networking
-% \subsection{}
-
 \subsection{Paravirtualized Solutions}
 Paravirtualized solutions are those that interpose in some part of the RDMA logic path while keep the rest of the logic path in tact.
 Typically, the interposition is done in a part of the logic path that is not hot or performance sensitive (e.g.\ control plane operations) to add additional controllability while maintaining the performance characteristics of RDMA\@.
@@ -405,10 +402,10 @@ This solution is also typically called macvlan mode.
 \noindent
 \textbf{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   % todo: fix this part, how does the IP address depend on the NIC?
-   \item[Network Isolation] the only isolation provided is the setting of the IP address and VLAN tags on an isolated interface, the IP address is also dependent on the NIC
-   \item[Controllability] routing policies and traffic shaping capabilities are not possible unless implemented in the device
-   \item[Resource Utilization] aside from GID table entry consumption, resource utilization is identical to normal RDMA usage
+	% todo: fix this part, how does the IP address depend on the NIC?
+	\item[Network Isolation] the only isolation provided is the setting of the IP address and VLAN tags on an isolated interface, the IP address is also dependent on the NIC
+	\item[Controllability] routing policies and traffic shaping capabilities are not possible unless implemented in the device
+	\item[Resource Utilization] aside from GID table entry consumption, resource utilization is identical to normal RDMA usage
 \end{description}
 
 % todo
@@ -417,12 +414,12 @@ This solution is also typically called macvlan mode.
 \noindent
 \textbf{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Scalability Limits] can only scale to the size of the NIC's GID table, usually below 150 entries
-   \item[Proprietary] these features are built into the kernel's RDMA stack thus are available to everyone
-   \item[Maturity] have been in development since 2015, so is likely stable enough for use, but is still missing several controllability features; is built into the kernel so likely will be actively maintained
-   \item[Ease in Deployment] uses standard kernel isolation systems, thus is similar in ease of deployment as containers
-   \item[Execution Privileges] requires no additional privileges
-   \item[Network Pressure] requires a unique IP address per interface, thus can result in IP address exhaustion or network switch table exhaustion
+	\item[Scalability Limits] can only scale to the size of the NIC's GID table, usually below 150 entries
+	\item[Proprietary] these features are built into the kernel's RDMA stack thus are available to everyone
+	\item[Maturity] have been in development since 2015, so is likely stable enough for use, but is still missing several controllability features; is built into the kernel so likely will be actively maintained
+	\item[Ease in Deployment] uses standard kernel isolation systems, thus is similar in ease of deployment as containers
+	\item[Execution Privileges] requires no additional privileges
+	\item[Network Pressure] requires a unique IP address per interface, thus can result in IP address exhaustion or network switch table exhaustion
 \end{description}
 
 For those that don't need virtual network control for RDMA, do not anticipate running hundreds of RDMA containers, and do not require fine grain traffic shaping of RDMA packets (or are fine relying on the network or global NIC policies for it), this would be an excellent solution.
@@ -433,30 +430,38 @@ FreeFlow operates in a far more paravirtualized style with the use of a user-spa
 It claims to provide close to bare-metal RDMA performance, while adding significantly more controllability to RDMA operations, thereby allow for performant use inside of containers.
 It does this with two key features:
 \begin{enumerate*}[label={(\arabic*)},itemjoin*={{, and }},itemjoin={{, }}]
-   \item communications to RDMA character devices (i.e.\ \texttt{uverbs0}) and consumption of work requests is instead routed to and processed by a controller (FreeFlow Router)
-   \item the data path for \textit{payloads} are kept in-tact using shared memory
+	\item communications to RDMA character devices (i.e.\ \texttt{uverbs0}) and consumption of work requests is instead routed to and processed by a controller (FreeFlow Router)
+	\item the data path for \textit{payloads} are kept in-tact using shared memory
 \end{enumerate*};
 these being implemented in two pieces of software: the FreeFlow Library (FFL) and FreeFlow Router (FFR).
 
-% todo: insert diagram?
 Breaking this down, containers that use RDMA devices must use a modified form of the \texttt{libibverbs} library called the FreeFlow Library.
 This library forwards all \texttt{libibverbs} operations through an IPC channel, instead of the normal RDMA character devices, to a running FreeFlow Router process.
 This results in all of the RDMA control plane and most of the data plane flowing through FreeFlow, with the most critical parts of the data plane being kept intact.
 This is implemented as the following:
 \begin{enumerate}[nolistsep]
-   \item The FFR maintains virtual RDMA device information per container, for which it returns information about to the container when the container uses \texttt{libibverbs} operations like \texttt{ibv\_query\_device}.
-   \item The FFR maintains the true RDMA queue pairs for those virtual RDMA devices. This allows it to rewrite addressing information (such as dgid) when the container creates new queue-pairs.
-   \item On shared memory registration, the container (through the FFL) will shared those memory regions with the FFR, which then shares it with the NIC\@. Recall this shared memory region is where the RDMA message payloads live, thus this allows for one-sided and two-sided RDMA operations and keeps the hottest part of the RDMA data path in tact.
-   \item A container will post work requests through the IPC channel, which the FFR then processes and can apply traffic shaping rules to. Alternatively, the container can create ``fake'' queue-pairs in a region of memory shared with the FFR, on which the FFR will spin-loop on. When it reads a new work request, the FFR will process it with traffic shaping rules and copy it to the true queue pairs. This alternative mode, called FastPath, allows for lower latency, but requires the use of an entire CPU core.
+	\item The FFR maintains virtual RDMA device information per container, for which it returns information about to the container when the container uses \texttt{libibverbs} operations like \texttt{ibv\_query\_device}.
+	\item The FFR maintains the true RDMA queue pairs for those virtual RDMA devices. This allows it to rewrite addressing information (such as dgid) when the container creates new queue-pairs.
+	\item On shared memory registration, the container (through the FFL) will shared those memory regions with the FFR, which then shares it with the NIC\@. Recall this shared memory region is where the RDMA message payloads live, thus this allows for one-sided and two-sided RDMA operations and keeps the hottest part of the RDMA data path in tact.
+	\item A container will post work requests through the IPC channel, which the FFR then processes and can apply traffic shaping rules to. Alternatively, the container can create ``fake'' queue-pairs in a region of memory shared with the FFR, on which the FFR will spin-loop on. When it reads a new work request, the FFR will process it with traffic shaping rules and copy it to the true queue pairs. This alternative mode, called FastPath, allows for lower latency, but requires the use of an entire CPU core.
 \end{enumerate}
 This clever interposition in the least performance critical parts of RDMA allow for significantly more isolation and controllability, and allows for integrations with existing network isolation systems~\cite{kim2019freeflow}.
+
+\begin{figure}
+	\centering
+	\resizebox{0.6\linewidth}{!}{
+		\includegraphics{freeflow_arch.png}
+	}
+	\caption{FreeFlow Architecture}
+	\caption*{Source:~\cite{kim2019freeflow}}
+\end{figure}
 
 \noindent
 \textbf{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Network Isolation] each container is given its own virtual RDMA device, ``namespace'' in the FreeFlow Router, and is not exposed to the NIC's actual network, thus allowing for the same level of isolation as standard container networks
-   \item[Controllability] allows for full control over the routing and traffic shaping of RDMA messages
-   \item[Resource Utilization] can require the use of an entire CPU core (or more) for low latency needs, otherwise uses no more overhead than one additional running process
+	\item[Network Isolation] each container is given its own virtual RDMA device, ``namespace'' in the FreeFlow Router, and is not exposed to the NIC's actual network, thus allowing for the same level of isolation as standard container networks
+	\item[Controllability] allows for full control over the routing and traffic shaping of RDMA messages
+	\item[Resource Utilization] can require the use of an entire CPU core (or more) for low latency needs, otherwise uses no more overhead than one additional running process
 \end{description}
 
 % todo
@@ -465,12 +470,12 @@ This clever interposition in the least performance critical parts of RDMA allow 
 \noindent
 \textbf{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Scalability Limits] can feasibly scale to hundreds of containers as it is constrained only by the available hardware on the host, not the NIC
-   \item[Proprietary] FreeFlow is available to use on GitHub and uses the standard \texttt{libibverbs} library
-   \item[Maturity] has not been maintained since publication and relies on an older \texttt{libibverbs} version, thus is not mature enough for general use
-   \item[Ease in Deployment] it does not currently plug into existing container orchestration tools and requires patching headers for us, thus is not easy to deploy
-   \item[Execution Privileges] requires the FreeFlow Router to be a privileged container (if it runs in one), but client containers do not have to be privileged
-   \item[Network Pressure] virtual FreeFlow RDMA devices are not exposed to the network, thus creates no additional network pressure
+	\item[Scalability Limits] can feasibly scale to hundreds of containers as it is constrained only by the available hardware on the host, not the NIC
+	\item[Proprietary] FreeFlow is available to use on GitHub and uses the standard \texttt{libibverbs} library
+	\item[Maturity] has not been maintained since publication and relies on an older \texttt{libibverbs} version, thus is not mature enough for general use
+	\item[Ease in Deployment] it does not currently plug into existing container orchestration tools and requires patching headers for us, thus is not easy to deploy
+	\item[Execution Privileges] requires the FreeFlow Router to be a privileged container (if it runs in one), but client containers do not have to be privileged
+	\item[Network Pressure] virtual FreeFlow RDMA devices are not exposed to the network, thus creates no additional network pressure
 \end{description}
 
 While FreeFlow seems like a promising solution and does not rely on the RDMA hardware capabilities, it suffers from being an unmaintained research project and is, unfortunately, not fit for general use.
@@ -485,9 +490,9 @@ However, as the controller is still interposed in the RDMA control plane, addres
 MasQ is not publicly available and is similar enough to FreeFlow that it will not be fully elaborated on.
 The key differences between MasQ and FreeFlow are:
 \begin{enumerate*}[label={(\arabic*)},itemjoin*={{, and }},itemjoin={{, }}]
-   \item reduced controllability
-   \item reduced resource utilization
-   \item improved latency performance
+	\item reduced controllability
+	\item reduced resource utilization
+	\item improved latency performance
 \end{enumerate*};
 as well as being proprietary and inaccessible for public use~\cite{he2020masq}.
 
@@ -508,10 +513,10 @@ Further, because these are still hardware devices, virtual functions cannot inte
 \noindent
 \textbf{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   % todo: fix this part, how does the IP address depend on the NIC?
-   \item[Network Isolation] each NIC is given its own RDMA device, which can have its own IP address and VLAN tags; however the IP address must be exposed to the host network
-   \item[Controllability] routing policies and traffic shaping capabilities are not possible unless implemented in the device
-   \item[Resource Utilization] consumes SR-IOV slots in the NIC and can exhaust the GID table of the NIC, however does not require any other resources
+	% todo: fix this part, how does the IP address depend on the NIC?
+	\item[Network Isolation] each NIC is given its own RDMA device, which can have its own IP address and VLAN tags; however the IP address must be exposed to the host network
+	\item[Controllability] routing policies and traffic shaping capabilities are not possible unless implemented in the device
+	\item[Resource Utilization] consumes SR-IOV slots in the NIC and can exhaust the GID table of the NIC, however does not require any other resources
 \end{description}
 
 % todo
@@ -520,12 +525,12 @@ Further, because these are still hardware devices, virtual functions cannot inte
 \noindent
 \textbf{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Scalability Limits] limited by both the number of possible SR-IOV virtual functions on the NIC, as well as the number of GID table entries available (ex.\ for RoCEv2, SR-IOV VFs need at least 2 entries)
-   \item[Proprietary] requires the NIC hardware to support it, some controllability features like flow control are dependent on the NIC features as well
-   \item[Maturity] has been commonly used for virtual machines and is mature enough for general use
-   \item[Ease in Deployment] requires custom handlers for container engines to provision, but these are commonly provided by NIC vendors thus is relatively easy to deploy
-   \item[Execution Privileges] requires privileges to provision (and possibly control) new SR-IOV NICs
-   \item[Network Pressure] requires new IP address and MAC addresses for each virtual function on Ethernet; adds no additional network pressure on Infiniband
+	\item[Scalability Limits] limited by both the number of possible SR-IOV virtual functions on the NIC, as well as the number of GID table entries available (ex.\ for RoCEv2, SR-IOV VFs need at least 2 entries)
+	\item[Proprietary] requires the NIC hardware to support it, some controllability features like flow control are dependent on the NIC features as well
+	\item[Maturity] has been commonly used for virtual machines and is mature enough for general use
+	\item[Ease in Deployment] requires custom handlers for container engines to provision, but these are commonly provided by NIC vendors thus is relatively easy to deploy
+	\item[Execution Privileges] requires privileges to provision (and possibly control) new SR-IOV NICs
+	\item[Network Pressure] requires new IP address and MAC addresses for each virtual function on Ethernet; adds no additional network pressure on Infiniband
 \end{description}
 
 SR-IOV provides many of the same benefits as shared HCA, thus in most situations, it may be advisable to use shared HCAs instead to avoid the limit on the number of possible virtual functions and the slight performance penalty for using SR-IOV\@.
@@ -548,9 +553,9 @@ Thus, while these characteristics are not necessarily generalizable to all hardw
 \noindent
 \textbf{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Network Isolation] when used with SR-IOV, full network isolation can be achieved, otherwise hardware offload cannot provide individual interfaces to containers
-   \item[Controllability] routing policies and traffic shaping are possible as part of Open vSwitch
-   \item[Resource Utilization] requires no host CPU or memory utilization
+	\item[Network Isolation] when used with SR-IOV, full network isolation can be achieved, otherwise hardware offload cannot provide individual interfaces to containers
+	\item[Controllability] routing policies and traffic shaping are possible as part of Open vSwitch
+	\item[Resource Utilization] requires no host CPU or memory utilization
 \end{description}
 
 % todo
@@ -559,25 +564,33 @@ Thus, while these characteristics are not necessarily generalizable to all hardw
 \noindent
 \textbf{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Scalability Limits] unknown how many policies can be defined on a NIC at once
-   \item[Proprietary] policy definitions are not proprietary, but policy execution is entirely proprietary and requires specialized Mellanox hardware
-   \item[Maturity] unknown, but with heavy vendor support appears to be mature enough for production use
-   \item[Ease in Deployment] requires integration with SR-IOV and specialized Open vSwitch policy definitions, not as easy to plug and play
-   \item[Execution Privileges] requires no additional privileges
-   \item[Network Pressure] no additional network pressure when used with SR-IOV
+	\item[Scalability Limits] unknown how many policies can be defined on a NIC at once
+	\item[Proprietary] policy definitions are not proprietary, but policy execution is entirely proprietary and requires specialized Mellanox hardware
+	\item[Maturity] unknown, but with heavy vendor support appears to be mature enough for production use
+	\item[Ease in Deployment] requires integration with SR-IOV and specialized Open vSwitch policy definitions, not as easy to plug and play
+	\item[Execution Privileges] requires no additional privileges
+	\item[Network Pressure] no additional network pressure when used with SR-IOV
 \end{description}
 
 
 \subsection{Software Solutions: SoftRoCE}
-SoftRoCE is a full software implementation of a RoCE-capable RDMA stack.
-It can be run on top of any Ethernet NIC to create virtual RDMA devices, that can then be used like a normal RDMA device in \texttt{libibverbs}.
+SoftRoCE is a full software implementation of a RoCE-capable RDMA stack that can be used to create virtualized RDMA devices that run on top of existing Ethernet NICs~\cite{softroceoverview}. 
+The ``fully in-software'' bit allows for total configuration of the virtualized RDMA device, which can be used to create fully isolated, virtualized RDMA devices that preserve and integrate with all container isolation systems.
+However, it also come at the cost of massive performance penalties from: 
+\begin{enumerate*}[label={(\arabic*)},itemjoin*={{, and }},itemjoin={{, }}]
+	\item being unable to provide any hardware performance benefits from standard hardware RDMA devices
+	\item requiring full software execution of the RDMA stack
+	\item having to be run on top of the existing kernel TCP/UDP stack
+\end{enumerate*}.
+While some of these are optimized for with the SoftRoCE now being implemented as a kernel driver, SoftRoCE still remains a low performance RDMA solution~\cite{softrocedriver}.
+Thus, SoftRoCE is likely viable only for specific niche use cases, such as for those who don't need the performance of RDMA and are simply seeking to enable RDMA compatibility (e.g.\ an RDMA client inside of a container).
 
 \noindent
 \textbf{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Network Isolation] when used with SR-IOV, full network isolation can be achieved, otherwise hardware offload cannot provide individual interfaces to containers
-   \item[Controllability] routing policies and traffic shaping are possible as part of Open vSwitch
-   \item[Resource Utilization] requires no host CPU or memory utilization
+	\item[Network Isolation] provides full container network isolation
+	\item[Controllability] routing policies and traffic shaping are possible and fully configurable
+	\item[Resource Utilization] requires significant CPU and memory to run the RDMA stack
 \end{description}
 
 % todo
@@ -586,22 +599,36 @@ It can be run on top of any Ethernet NIC to create virtual RDMA devices, that ca
 \noindent
 \textbf{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
-   \item[Scalability Limits] unknown how many policies can be defined on a NIC at once
-   \item[Proprietary] policy definitions are not proprietary, but policy execution is entirely proprietary and requires specialized Mellanox hardware
-   \item[Maturity] unknown, but with heavy vendor support appears to be mature enough for production use
-   \item[Ease in Deployment] requires integration with SR-IOV and specialized Open vSwitch policy definitions, not as easy to plug and play
-   \item[Execution Privileges] requires no additional privileges
-   \item[Network Pressure] no additional network pressure when used with SR-IOV
+	\item[Scalability Limits] cannot scale due to CPU contention
+	\item[Proprietary] open source kernel driver that has been upstreamed, so it is available to all Linux users
+	\item[Maturity] relatively mature, but has little development outside of the research community thus suffers from a number of bugs~\cite{softrocedriver}
+	\item[Ease in Deployment] quick to deploy using standard \texttt{iproute2} tools
+	\item[Execution Privileges] requires no additional privileges
+	\item[Network Pressure] creates no additional network pressure than using standard networking
 \end{description}
-
 
 \section{Discussion}
 \subsection{Security}
-The RDMA protocol itself doesn't support encryption, required by the NIC for any meaningful performance.
+Security is often a concern among those adopting containers, especially when using containers to facilitate a multi-tenant environment.
+RDMA provides on-host security with the use of the RDMA management plane and cryptographic keys, as explained in Section~\ref{subsec:RDMA Protocol}, which is a core part of the protocol and is thus inherited and remains secure with each RDMA-in-container solution.
+However, RDMA suffers from minimal network security which makes RDMA vulnerable to eavesdropping, man-in-the-middle, and tampering attacks, this also being inherited by each RDMA-in-container solution.
+This is due to the lack of encryption on RDMA packets. 
+
+Encryption would require reading and rewriting the entirety of the RDMA packet. 
+As RDMA bypasses the kernel and CPU, encryption would then have to be done on the RDMA NIC itself and, until recently, no NIC has provided this feature.
+Further, the RDMA packet contains the \texttt{pkey} --- the cryptographic key used to authorize access to remote memory regions --- which is stored in plaintext in the unencrypted RDMA packet.
+If eavesdropped on, obtaining this \texttt{pkey} would allow outside actors to access the same RDMA memory regions.
+Neither of these are made worse nor can be resolved with any RDMA-in-container solution~\cite{rdmasecurity}.
 
 \subsection{Network Reconfiguration}
+One other potential solution for enabling RDMA-in-containers would be to use network reconfiguration, where the container network policies are enforced by the underlying network instead of by the host or NIC.
+Alongside the use of SR-IOV, shared HCAs, or VLAN tagging, this could provide another fast, configurable, and low resource utilizing solution for RDMA-in-containers.
+This would operate similar to existing container networking solutions like Project Calico using BGP~\cite{caliconetwork}.
+With the variability in network configuration, types (e.g.\ Infiniband or Ethernet), privilege escalation risks, and available network resources, it is difficult to generalize properties of this solution thus is left for each environment to assess for themselves.
 
 \subsection{Looking Forward}
+It appears 
+
 FreeFlow and MasQ high jack the \texttt{libibverbs} libraries, why not high jack the character devices themselves?
 Why not high jack just rdmacm itself?
 Actually, I think Mellanox might be going this direction with shared HCAs.
@@ -621,18 +648,19 @@ You are at the mercy of Mellanox though.
 The paravirtualized solutions seem like a good alternative, but they require a lot of maintenance to keep up to date, especially with how complex and industry-driven the RDMA code base is.
 
 
-\nocite{*}
 \pagebreak
-\section*{References}
-\printbibliography[heading=subbibliography,keyword={containers},title={Containers}]{}
-\printbibliography[heading=subbibliography,keyword={containernetworking},title={Container Networking}]{}
-\printbibliography[heading=subbibliography,keyword={rdmacontainers},title={RDMA in Containers}]{}
-\printbibliography[heading=subbibliography,keyword={rdmaresearch},title={RDMA Specific Research}]{}
-\printbibliography[heading=subbibliography,keyword={highperfnetworking},title={High Performance Networking}]{}
-\printbibliography[heading=subbibliography,keyword={kernelbypassnetworking},title={Kernel Bypass Networking}]{}
-\printbibliography[heading=subbibliography,keyword={documentation},title={Documentation}]{}
-\printbibliography[heading=subbibliography,keyword={tutorial},title={Tutorials}]{}
-\printbibliography[heading=subbibliography,keyword={mellanox},title={Mellanox Infosheets}]{}
+\printbibliography{}
+% \nocite{*}
+% \section*{References}
+% \printbibliography[heading=subbibliography,keyword={containers},title={Containers}]{}
+% \printbibliography[heading=subbibliography,keyword={containernetworking},title={Container Networking}]{}
+% \printbibliography[heading=subbibliography,keyword={rdmacontainers},title={RDMA in Containers}]{}
+% \printbibliography[heading=subbibliography,keyword={rdmaresearch},title={RDMA Specific Research}]{}
+% \printbibliography[heading=subbibliography,keyword={highperfnetworking},title={High Performance Networking}]{}
+% \printbibliography[heading=subbibliography,keyword={kernelbypassnetworking},title={Kernel Bypass Networking}]{}
+% \printbibliography[heading=subbibliography,keyword={documentation},title={Documentation}]{}
+% \printbibliography[heading=subbibliography,keyword={tutorial},title={Tutorials}]{}
+% \printbibliography[heading=subbibliography,keyword={mellanox},title={Mellanox Infosheets}]{}
 
 % \pagebreak
 % \section*{Appendix}
