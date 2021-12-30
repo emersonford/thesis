@@ -1,0 +1,5 @@
+---
+- name: disable turbo boost
+  shell: 'echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo'
+  args:
+    executable: /bin/bash

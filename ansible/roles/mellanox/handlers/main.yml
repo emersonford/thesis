@@ -21,3 +21,8 @@
   async_status:
     jid: "{{ mlnxofedinstall_task.ansible_job_id }}"
     mode: cleanup
+  notify: Reboot host
+
+- name: Reboot host
+  reboot:
+    reboot_timeout: 3600

@@ -1,13 +1,4 @@
 ---
-- name: configure ConnectX-4 nodes
-  hosts: connectx4
-  roles:
-    - docker
-    - mellanox
-    - freeflow
-  vars:
-    group_name: connectx4
-
 - name: configure ConnectX-3 nodes
   hosts: connectx3
   roles:
@@ -18,12 +9,22 @@
   vars:
     group_name: connectx3
 
+- name: configure ConnectX-4 nodes
+  hosts: connectx4
+  roles:
+    - docker
+    - mellanox
+    - freeflow
+    - cpufreq
+  vars:
+    group_name: connectx4
+
 - name: configure ConnectX-5 nodes
   hosts: connectx5
   roles:
     - docker
     - mellanox
-    - freeflow
+    - cpufreq
   vars:
     group_name: connectx5
 
@@ -33,5 +34,6 @@
     - docker
     - mellanox
     - freeflow
+    - cpufreq
   vars:
     group_name: connectx5_old

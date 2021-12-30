@@ -1,6 +1,15 @@
 ---
-- debug:
-    var: hostvars[groups[group_name][0]]
+- name: get RoCE interface name
+  shell: "ip -o addr show to {{ roce_interface_subnet }} | awk '{print $2}'"
+  register: roce_if_name_cmd
+  changed_when: False
+
+- debug: 
+    var: roce_if_name_cmd
+
+- set_fact: 
+    roce_if_name: "{{ roce_if_name_cmd.stdout }}"
+  changed_when: False
 
 - name: Clone Freeflow repo
   become: yes
@@ -15,7 +24,7 @@
     - Replace first IP in cpp
     - Replace second IP in cpp
     - Replace device idx
-    - Enable verbose logging
+  # - Enable verbose logging
     - Build base Docker image
     - Build ffrouter Docker image
     - Build ffclient Docker image
@@ -28,5 +37,5 @@
     mode: '744'
     src: 'start-containers.sh'
   vars:
-    host_ip_addr: "{{ ansible_ens1f0.ipv4.address }}/{{ ansible_ens1f0.ipv4.netmask }}"
+    host_ip_addr: "{{ ansible_facts[roce_if_name].ipv4.address }}/{{ ansible_facts[roce_if_name].ipv4.netmask }}"
     freeflow_host_ip_prefix: "{{ host_ip_addr | ansible.netcommon.ipaddr('address/prefix') }}"

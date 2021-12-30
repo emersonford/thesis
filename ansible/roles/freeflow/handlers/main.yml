@@ -3,7 +3,7 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.h'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][0]]["ansible_ens1f0"]["ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][0]]["ansible_" + roce_if_name]["ipv4"]["address"] }}'
   loop:
     - '192[.]168[.]2[.]13'
 
@@ -11,7 +11,7 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.h'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][1]]["ansible_ens1f0"]["ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][1]]["ansible_" + roce_if_name]["ipv4"]["address"] }}'
   loop:
     - '192[.]168[.]2[.]14'
 
@@ -19,7 +19,7 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.cpp'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][0]]["ansible_ens1f0"]["ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][0]]["ansible_" + roce_if_name]["ipv4"]["address"] }}'
   loop:
     - '192[.]168[.]2[.]13'
     - '10[.]47[.]0[.]4'
@@ -28,7 +28,7 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/ffrouter.cpp'
     regexp: '{{ item }}'
-    replace: '{{ hostvars[groups[group_name][1]]["ansible_ens1f0"]["ipv4"]["address"] }}'
+    replace: '{{ hostvars[groups[group_name][1]]["ansible_" + roce_if_name]["ipv4"]["address"] }}'
   loop:
     - '192[.]168[.]2[.]14'
     - '10[.]47[.]0[.]5'
@@ -36,8 +36,8 @@
 - name: Replace device idx
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/rdma_api.cpp'
-    regexp: 'return dev_list[[]0[]];'
-    replace: 'return dev_list[2];'
+    regexp: 'const char [*]device_name = "mlx5_0";'
+    replace: 'const char *device_name = "mlx5_0";'
 
 - name: Enable verbose logging
   replace:

@@ -5,13 +5,13 @@ all:
     connectx3_node2:
       ansible_host: ms0833.utah.cloudlab.us
     connectx4_node1:
-      ansible_host: hp168.utah.cloudlab.us
+      ansible_host: hp139.utah.cloudlab.us
     connectx4_node2:
-      ansible_host: hp200.utah.cloudlab.us
+      ansible_host: hp136.utah.cloudlab.us
     connectx5_node1:
-      ansible_host: amd266.utah.cloudlab.us
+      ansible_host: amd007.utah.cloudlab.us
     connectx5_node2:
-      ansible_host: amd254.utah.cloudlab.us
+      ansible_host: amd009.utah.cloudlab.us
     connectx5_node3:
       ansible_host: amd009.utah.cloudlab.us
     connectx5_node4:
