@@ -1,0 +1,92 @@
+---
+title: "Thesis Data Graphs"
+output: html_notebook
+---
+
+## Package Imports 
+```{r}
+library(ggplot2)
+library(scales)
+```
+
+## Data Import
+```{r}
+roce_10gb_read_lat <- read.csv("roce_10gb_read_lat.csv")
+roce_10gb_read_lat$bytes = roce_10gb_read_lat$X.bytes
+roce_10gb_read_lat$avg = roce_10gb_read_lat$t_avg.usec.
+
+roce_10gb_read_bw <- read.csv("roce_10gb_read_bw.csv")
+roce_10gb_read_bw$bytes = roce_10gb_read_bw$X.bytes
+roce_10gb_read_bw$avg = roce_10gb_read_bw$BW.average.MB.sec.
+roce_10gb_read_bw$mpps = roce_10gb_read_bw$MsgRate.Mpps.
+
+roce_10gb_send_bw <- read.csv("roce_10gb_send_bw.csv")
+roce_10gb_send_bw$bytes = roce_10gb_send_bw$X.bytes
+roce_10gb_send_bw$avg = roce_10gb_send_bw$BW.average.MB.sec.
+roce_10gb_send_bw$mpps = roce_10gb_send_bw$MsgRate.Mpps.
+
+roce_macvlan_10gb_read_lat <- read.csv("roce_macvlan_10gb_read_lat.csv")
+roce_macvlan_10gb_read_lat$bytes = roce_macvlan_10gb_read_lat$X.bytes
+roce_macvlan_10gb_read_lat$avg = roce_macvlan_10gb_read_lat$t_avg.usec.
+
+ib_56gb_read_lat <- read.csv("ib_56gb_read_lat.csv")
+ib_56gb_read_lat$bytes = ib_56gb_read_lat$X.bytes
+ib_56gb_read_lat$avg = ib_56gb_read_lat$t_avg.usec.
+```
+
+## Graphs
+```{r}
+read_lat_plot = ggplot(subset(roce_10gb_read_lat, bytes <= 2^16), aes(x = bytes, y = avg)) + 
+  geom_line(aes(color = type, linetype = type)) + 
+  labs(title = "ib_read_lat, 10Gbit ConnectX3 NIC, 500 iterations", y="avg latency (usec)") + 
+  scale_x_continuous(breaks=sapply(c(1:8, 12, 16), function(x) 2^x)) +
+  coord_trans(x="log2")
+read_lat_plot
+```
+
+```{r}
+read_bw_plot = ggplot(subset(roce_10gb_read_bw, bytes <= 2^16), aes(x = bytes, y = avg)) + 
+  geom_line(aes(color = type, linetype = type)) + 
+  labs(title = "ib_read_bw, 10Gbit ConnectX3 NIC, 500 iterations", y='avg bandwidth (MB/sec)') + 
+  scale_x_continuous(trans='log2', breaks=sapply(c(1:8, 12, 16), function(x) 2^x)) +
+  coord_trans(x="log2")
+read_bw_plot
+```
+
+
+```{r}
+read_bw_mpps_plot = ggplot(subset(roce_10gb_read_bw, bytes <= 2^16), aes(x = bytes, y = mpps)) + 
+  geom_line(aes(color = type, linetype = type)) + 
+  labs(title = "ib_read_bw, 10Gbit ConnectX3 NIC, 500 iterations", y='message rate (million packets per second)') + 
+  scale_x_continuous(trans='log2', breaks=sapply(c(1:8, 12, 16), function(x) 2^x)) +
+  coord_trans(x="log2")
+read_bw_mpps_plot
+```
+
+```{r}
+send_bw_plot = ggplot(subset(roce_10gb_send_bw, bytes <= 2^16), aes(x = bytes, y = avg)) + 
+  geom_line(aes(color = type, linetype = type)) + 
+  labs(title = "ib_send_bw, 10Gbit ConnectX3 NIC, 500 iterations", y='avg bandwidth (MB/sec)') + 
+  scale_x_continuous(trans='log2', breaks=sapply(c(1:8, 12, 16), function(x) 2^x)) +
+  coord_trans(x="log2")
+send_bw_plot
+```
+
+
+```{r}
+macvlan_read_lat_plot = ggplot(subset(roce_macvlan_10gb_read_lat, bytes <= 2^16), aes(x = bytes, y = avg)) + 
+  geom_line(aes(color = type, linetype = type)) + 
+  labs(title = "ib_read_lat, 10Gbit ConnectX3 NIC, Shared HCA, 1000 iterations", y="avg latency (usec)") + 
+  scale_x_continuous(trans='log2', breaks=sapply(c(1:8, 12, 16), function(x) 2^x)) +
+  coord_trans(x="log2")
+macvlan_read_lat_plot
+```
+
+```{r}
+ib_56gb_read_lat_plot = ggplot(subset(ib_56gb_read_lat, bytes <= 2^16), aes(x = bytes, y = avg)) + 
+  geom_line(aes(color = type, linetype = type)) + 
+  labs(title = "ib_read_lat, 56Gbit ConnectX3 IB NIC, 1000 iterations", y="avg latency (usec)") + 
+  scale_x_continuous(trans='log2', breaks=sapply(c(1:8, 12, 16), function(x) 2^x)) +
+  coord_trans(x="log2")
+ib_56gb_read_lat_plot
+```
