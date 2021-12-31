@@ -5,13 +5,13 @@ all:
     connectx3_node2:
       ansible_host: ms0833.utah.cloudlab.us
     connectx4_node1:
-      ansible_host: hp139.utah.cloudlab.us
+      ansible_host: hp176.utah.cloudlab.us
     connectx4_node2:
-      ansible_host: hp136.utah.cloudlab.us
+      ansible_host: hp191.utah.cloudlab.us
     connectx5_node1:
-      ansible_host: amd007.utah.cloudlab.us
+      ansible_host: amd008.utah.cloudlab.us
     connectx5_node2:
-      ansible_host: amd009.utah.cloudlab.us
+      ansible_host: amd022.utah.cloudlab.us
     connectx5_node3:
       ansible_host: amd009.utah.cloudlab.us
     connectx5_node4:
@@ -25,26 +25,23 @@ all:
         connectx3_node1:
         connectx3_node2:
       vars:
-        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-4.9-3.1.5.0-ubuntu20.04-x86_64'
-        mellanox_ib_driver_url: 'https://content.mellanox.com/ofed/MLNX_OFED-4.9-3.1.5.0/MLNX_OFED_LINUX-4.9-3.1.5.0-ubuntu20.04-x86_64.tgz'
+        mlnx_ofed_version: '4.9-4.1.7.0'
+        freeflow_device_name: 'mlx4_0'
     connectx4:
       hosts:
         connectx4_node1:
         connectx4_node2:
       vars:
-        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-5.1-0.6.6.0-ubuntu18.04-x86_64'
-        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-5.1-0.6.6.0/MLNX_OFED_LINUX-5.1-0.6.6.0-ubuntu18.04-x86_64.tgz'
+        mlnx_ofed_version: '4.9-4.1.7.0'
     connectx5:
       hosts:
         connectx5_node1:
         connectx5_node2:
       vars:
-        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-5.4-3.0.3.0-ubuntu20.04-x86_64'
-        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-5.4-3.0.3.0/MLNX_OFED_LINUX-5.4-3.0.3.0-ubuntu20.04-x86_64.tgz'
+        mlnx_ofed_version: '5.5-1.0.3.2'
     connectx5_old:
       hosts:
         connectx5_node3:
         connectx5_node4:
       vars:
-        mellanox_ib_driver_name: 'MLNX_OFED_LINUX-4.9-4.0.8.0-ubuntu20.04-x86_64'
-        mellanox_ib_driver_url: 'http://content.mellanox.com/ofed/MLNX_OFED-4.9-4.0.8.0/MLNX_OFED_LINUX-4.9-4.0.8.0-ubuntu20.04-x86_64.tgz'
+        mlnx_ofed_version: '4.9-4.1.7.0'

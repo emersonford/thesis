@@ -4,9 +4,6 @@
   register: roce_if_name_cmd
   changed_when: False
 
-- debug: 
-    var: roce_if_name_cmd
-
 - set_fact: 
     roce_if_name: "{{ roce_if_name_cmd.stdout }}"
   changed_when: False

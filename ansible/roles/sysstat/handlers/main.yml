@@ -1,0 +1,6 @@
+---
+- name: Restart sysstat
+  service:
+    name: sysstat
+    state: restarted
+

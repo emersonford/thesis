@@ -37,7 +37,7 @@
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/rdma_api.cpp'
     regexp: 'const char [*]device_name = "mlx5_0";'
-    replace: 'const char *device_name = "mlx5_0";'
+    replace: 'const char *device_name = "{{freeflow_device_name}}";'
 
 - name: Enable verbose logging
   replace:

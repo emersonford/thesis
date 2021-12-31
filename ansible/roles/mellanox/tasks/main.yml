@@ -1,6 +1,14 @@
 ---
+- set_fact:
+    mellanox_ib_driver_name: "MLNX_OFED_LINUX-{{mlnx_ofed_version}}-{{ansible_facts['lsb']['id'] | lower}}{{ansible_facts['lsb']['release']}}-{{ansible_facts['machine']}}"
+  changed_when: False
+
+- set_fact:
+    mellanox_ib_driver_url: "https://content.mellanox.com/ofed/MLNX_OFED-{{mlnx_ofed_version}}/{{mellanox_ib_driver_name}}.tgz"
+  changed_when: False
+
 - name: Pull Mellanox drivers
-  shell: 'curl {{ mellanox_ib_driver_url }} | tar -xz'
+  shell: 'curl -L {{ mellanox_ib_driver_url }} | tar -xz'
   args:
     creates: '~/{{ mellanox_ib_driver_name }}/'
     chdir: '~'

@@ -6,6 +6,8 @@
     - mellanox
     - freeflow
     - connectx3
+    - cpufreq
+    - sysstat
   vars:
     group_name: connectx3
 
@@ -14,8 +16,8 @@
   roles:
     - docker
     - mellanox
-    - freeflow
     - cpufreq
+    - sysstat
   vars:
     group_name: connectx4
 
@@ -25,6 +27,7 @@
     - docker
     - mellanox
     - cpufreq
+    - sysstat
   vars:
     group_name: connectx5
 
@@ -33,7 +36,7 @@
   roles:
     - docker
     - mellanox
-    - freeflow
     - cpufreq
+    - sysstat
   vars:
     group_name: connectx5_old
