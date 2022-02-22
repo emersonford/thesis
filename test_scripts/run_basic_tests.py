@@ -23,20 +23,22 @@ def main(args: argparse.Namespace) -> int:
     ssh_host_2 = ["ssh", f"{args.user}@{args.host2}"]
 
     cli_command = psutil.Process(getpid()).cmdline()
+    data_dir = f"../data/raw/{args.data_dir}_basic_tests"
 
-    makedirs(f"../data/raw/{args.data_dir}", exist_ok=True)
-    with open(f"../data/raw/{args.data_dir}/metadata", "w") as f:
+    makedirs(data_dir, exist_ok=True)
+    with open(f"{data_dir}/metadata", "w") as f:
         f.write(f"host1: {args.host1}\nhost2: {args.host2}\ncommand: {cli_command}")
 
     cmd_prefix = f"{args.wrapper} '" if args.wrapper else ""
     cmd_postfix = "'" if args.wrapper else ""
 
     for c in IB_COMMANDS:
-        print(f"Running {c}{' ' + args.args if args.args else ' '}...")
+        cmd = f"{c}{' ' + args.args if args.args else ''}"
+        print(f"Running `{cmd_prefix}{cmd}{cmd_postfix}`...")
 
         ib_server = Popen(
             ssh_host_1
-            + [f"{cmd_prefix}{c} {args.args if args.args else ''}{cmd_postfix}"],
+            + [f"{cmd_prefix}{cmd}{cmd_postfix}"],
             text=True,
             stdout=DEVNULL,
             stderr=DEVNULL,
@@ -47,7 +49,7 @@ def main(args: argparse.Namespace) -> int:
         ib_client = run(
             ssh_host_2
             + [
-                f"{cmd_prefix}{c}{' ' + args.args if args.args else ' '} {args.host1}{cmd_postfix}"
+                f"{cmd_prefix}{cmd} {args.host1}{cmd_postfix}"
             ],
             capture_output=True,
             text=True,
@@ -58,7 +60,7 @@ def main(args: argparse.Namespace) -> int:
 
         print(ib_client.stdout)
 
-        with open(f"../data/raw/{args.data_dir}/{c}_{args.data_suffix}.txt", "w") as f:
+        with open(f"{data_dir}/{c}_{args.data_suffix}.txt", "w") as f:
             f.write(ib_client.stdout)
 
         sleep(1)
