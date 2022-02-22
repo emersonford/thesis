@@ -1,0 +1,3 @@
+host1: amd015.utah.cloudlab.us
+host2: amd019.utah.cloudlab.us
+command: ['/opt/homebrew/Cellar/python@3.10/3.10.2/Frameworks/Python.framework/Versions/3.10/Resources/Python.app/Contents/MacOS/Python', './run_cpu_tests.py', '--host1', 'amd015.utah.cloudlab.us', '--host2', 'amd019.utah.cloudlab.us', '--user', 'emerso0', '--data-dir', 'softroce', '--data-suffix', 'host', '--args', '-d mlx5_0', '--cpu-measure-time', '10']
