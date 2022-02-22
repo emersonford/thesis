@@ -1,21 +1,4 @@
 all:
-  hosts:
-    connectx3_node1:
-      ansible_host: ms0810.utah.cloudlab.us
-    connectx3_node2:
-      ansible_host: ms0833.utah.cloudlab.us
-    connectx4_node1:
-      ansible_host: hp176.utah.cloudlab.us
-    connectx4_node2:
-      ansible_host: hp191.utah.cloudlab.us
-    connectx5_node1:
-      ansible_host: amd008.utah.cloudlab.us
-    connectx5_node2:
-      ansible_host: amd022.utah.cloudlab.us
-    connectx5_node3:
-      ansible_host: amd009.utah.cloudlab.us
-    connectx5_node4:
-      ansible_host: amd008.utah.cloudlab.us
   vars:
     ansible_user: emerso0
     ansible_become: yes
@@ -23,25 +6,39 @@ all:
     connectx3:
       hosts:
         connectx3_node1:
+          ansible_host: ms0810.utah.cloudlab.us
         connectx3_node2:
+          ansible_host: ms0833.utah.cloudlab.us
       vars:
         mlnx_ofed_version: '4.9-4.1.7.0'
         freeflow_device_name: 'mlx4_0'
     connectx4:
       hosts:
         connectx4_node1:
+          ansible_host: hp176.utah.cloudlab.us
         connectx4_node2:
+          ansible_host: hp191.utah.cloudlab.us
       vars:
         mlnx_ofed_version: '4.9-4.1.7.0'
     connectx5:
       hosts:
         connectx5_node1:
+          ansible_host: amd017.utah.cloudlab.us
         connectx5_node2:
+          ansible_host: amd013.utah.cloudlab.us
       vars:
         mlnx_ofed_version: '5.5-1.0.3.2'
     connectx5_old:
       hosts:
-        connectx5_node3:
-        connectx5_node4:
+        connectx5_old_node1:
+          ansible_host: amd009.utah.cloudlab.us
+        connectx5_old_node2:
+          ansible_host: amd008.utah.cloudlab.us
       vars:
         mlnx_ofed_version: '4.9-4.1.7.0'
+    no_mlnx_ofed:
+      hosts:
+        no_mlnx_ofed_node1:
+          ansible_host: amd015.utah.cloudlab.us
+        no_mlnx_ofed_node2:
+          ansible_host: amd019.utah.cloudlab.us

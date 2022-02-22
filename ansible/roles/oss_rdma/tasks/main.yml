@@ -1,0 +1,8 @@
+---
+- name: Install OSS RDMA packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - rdma-core
+    - perftest

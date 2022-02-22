@@ -40,3 +40,11 @@
     - sysstat
   vars:
     group_name: connectx5_old
+
+- name: configure non-Mellanox nodes
+  hosts: no_mlnx_ofed
+  roles:
+    - docker
+    - cpufreq
+    - sysstat
+    - oss_rdma
