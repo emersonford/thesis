@@ -16,6 +16,7 @@
 \usepackage[inline]{enumitem}
 \usepackage{siunitx}
 \usepackage[skip=2pt]{caption}
+\usepackage{hyperref}
 
 \usepackage{tikz}
 \usetikzlibrary{fadings}
@@ -106,14 +107,13 @@ these properties being grouped in two main categories:
 \noindent
 and analyzed with varying levels of:
 \begin{itemize}[nolistsep]
-	\item number of containers present across the cluster and on a single host
+	\item number of virtualized RDMA devices on the cluster and host (e.g.\ where each virtualized RDMA device is allocated to a single container)
 	\item message size of network payloads
-	\item messages sent per second
 \end{itemize}
 which should adequately test the scalability of these properties.
 Finally, comments will also be made on:
 \begin{itemize}[nolistsep]
-	\item \textit{Scalability Limits}: are there hardware or software limits on the NIC for scalability
+	\item \textit{Scalability Limits}: are there any other hardware or software limits on the NIC for scalability
 	\item \textit{Proprietary}: can a solution be used across various RDMA-capable NIC vendors
 	\item \textit{Maturity}: what support exists for a solution, how well tested is a solution
 	\item \textit{Ease in Deployment}: are application changes necessary for a solution, how difficult is it to deploy the solution
@@ -161,11 +161,11 @@ For example, current top-of-the-line RDMA enabled NICs are capable of achieving 
 Understanding the data paths, architecture, and implementation of network planes for RDMA itself is critical for understanding how and why these various RDMA in containers solutions work and will therefore be explained.
 
 % todo: add terminology section here
-% there's the network device (mlx4_0)
+% There's the channel adapter (CA) / NIC / physical device.
+% There's the RDMA device for the software abstraction over the hardware.
 % network ports
-% rdma "device" (maybe?)
 % GID table entries
-% and interface
+% interfaces on top of the physical devices
 
 \subsubsection{Data Plane}
 While traditional host networking relies on kernel syscalls and interrupts as a communication channel for signalling packet sends and receives, RDMA instead utilizes in-memory queues that live in regions of memory explicitly shared between the user-space process and the NIC\footnote{the NIC using IOMMU to directly access memory without CPU interposition} as its data plane communication channel.
@@ -357,7 +357,7 @@ However, there are some key differences when assessing RDMA NIC sharing for cont
 Due to these differences, solutions like HyV, virtio-RDMA, and vRDMA are incompatible for use in containers and the remaining solutions must be assessed differently for containers than for virtual machines~\cite{fan2017towards,hyvpaper,vrdmavmware}.
 
 \subsubsection{Programmable NICs}
-Independent of RDMA, there is a large field of research around programmable NICs as a method of speeding up networking.
+Independent of RDMA, there is a large field of research around programmable NICs (often FPGA based) as a method of speeding up networking.
 Network rules, like firewalls, would be programmed into the NIC as a form of hardware offload, as opposed to executing on the CPU through the kernel.
 This could be used to express RDMA network rules with minimal performance impact as these rules would run on the NIC itself, therefore allowing for highly-performant container RDMA network isolation.
 This too may be part of the future for RDMA device management in containers, but as of now, does not seem mature enough for container use cases or for general use as:
@@ -573,6 +573,16 @@ Thus, while these characteristics are not necessarily generalizable to all hardw
 \end{description}
 
 
+% How to test:
+% Uninstall Mellanox OFED drivers (use ./uninstall.sh in MLNX_OFED)
+% Install `rdma-core` and `perftest`
+% Bring up SoftRoCE RDMA devices with `rdma link`
+% Disable RoCE on the underlying link (https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1877270)
+%
+% Other links:
+% https://github.com/linux-rdma/rdma-core/blob/master/Documentation/rxe.md
+% https://community.mellanox.com/s/article/howto-configure-soft-roce
+
 \subsection{Software Solutions: SoftRoCE}
 SoftRoCE is a full software implementation of a RoCE-capable RDMA stack that can be used to create virtualized RDMA devices that run on top of existing Ethernet NICs~\cite{softroceoverview}. 
 The ``fully in-software'' bit allows for total configuration of the virtualized RDMA device, which can be used to create fully isolated, virtualized RDMA devices that preserve and integrate with all container isolation systems.
@@ -610,36 +620,44 @@ Thus, SoftRoCE is likely viable only for specific niche use cases, such as for t
 \section{Discussion}
 \subsection{Security}
 Security is often a concern among those adopting containers, especially when using containers to facilitate a multi-tenant environment.
-RDMA provides on-host security with the use of the RDMA management plane and cryptographic keys, as explained in Section~\ref{subsec:RDMA Protocol}, which is a core part of the protocol and is thus inherited and remains secure with each RDMA-in-container solution.
-However, RDMA suffers from minimal network security which makes RDMA vulnerable to eavesdropping, man-in-the-middle, and tampering attacks, this also being inherited by each RDMA-in-container solution.
-This is due to the lack of encryption on RDMA packets. 
+Focusing on just RDMA for a minute, RDMA provides on-host security with the use of the RDMA management plane and cryptographic keys, as explained in Section~\ref{subsec:RDMA Protocol}.
+The management plane ensures RDMA devices cannot be reconfigured without the proper permissions on the host and cryptographic keys provide a mechanism to ensure remote hosts cannot read arbitrary memory regions.
+However, RDMA suffers from minimal network security as RDMA packets have no form of encryption, thus making RDMA vulnerable to eavesdropping, man-in-the-middle, and tampering attacks.
+This is particularly a problem as RDMA packets contain the \texttt{pkey} --- the cryptographic key used to authorize access to remote memory regions --- in plaintext in the unencrypted RDMA packet.
+If eavesdropped on, obtaining this \texttt{pkey} would allow outside actors to bypass all RDMA memory region restrictions~\cite{rdmasecurity}.
 
-Encryption would require reading and rewriting the entirety of the RDMA packet. 
+Solving this is non-trivial; encryption would require reading and rewriting the entirety of the RDMA packet. 
 As RDMA bypasses the kernel and CPU, encryption would then have to be done on the RDMA NIC itself and, until recently, no NIC has provided this feature.
-Further, the RDMA packet contains the \texttt{pkey} --- the cryptographic key used to authorize access to remote memory regions --- which is stored in plaintext in the unencrypted RDMA packet.
-If eavesdropped on, obtaining this \texttt{pkey} would allow outside actors to access the same RDMA memory regions.
-Neither of these are made worse nor can be resolved with any RDMA-in-container solution~\cite{rdmasecurity}.
+Given this, the use of RDMA in containers would inherit this security vulnerability and no RDMA in container solution would be able to solve this as it must be done at the NIC level.
+
+For the security of the management plane for RDMA in container solutions, almost every solution inherits the security provided by the core RDMA protocol.
+Some solutions, such as FreeFlow, would have to implement their own security model for the management of their virtual RDMA devices as only FreeFlow is aware of these devices.
+For other solutions where the kernel is aware of the virtual devices, these solutions would piggyback on existing RDMA management plane security and their use would not open any potential security concerns.
 
 \subsection{Network Reconfiguration}
-One other potential solution for enabling RDMA-in-containers would be to use network reconfiguration, where the container network policies are enforced by the underlying network instead of by the host or NIC.
+One other potential solution for enabling RDMA-in-containers would be to use network reconfiguration, where the container network policies are enforced by the underlying network instead of by the host or NIC\@.
 Alongside the use of SR-IOV, shared HCAs, or VLAN tagging, this could provide another fast, configurable, and low resource utilizing solution for RDMA-in-containers.
 This would operate similar to existing container networking solutions like Project Calico using BGP~\cite{caliconetwork}.
-With the variability in network configuration, types (e.g.\ Infiniband or Ethernet), privilege escalation risks, and available network resources, it is difficult to generalize properties of this solution thus is left for each environment to assess for themselves.
+With the variability in network configuration, types (e.g.\ Infiniband or Ethernet), privilege escalation risks (e.g.\ would the container orchestration software itself be able to reconfigure the network?), and available network resources, it is difficult to generalize properties of this solution thus is left for each environment to assess for themselves.
 
 \subsection{Looking Forward}
-It appears that the future of RDMA use in containers will converge to two 
+It seems the future of RDMA in containers is converging toward a paravirtualization-like approach for intra-machine RDMA device isolation and a hardware-based approach for inter-machine RDMA device isolation.
+In other words, paravirtualization --- likely in the form of kernel managed virtual RDMA devices with the NIC having some visibility into those --- would be used to create individual RDMA devices for each container.
+Hardware offload would be used to enforce network policies for each of those virtual devices. 
+This suggests that a true RDMA in container solution would require new, specialized NICs that have both hardware offload and paravirtualization support, meaning RDMA in containers would incur additional costs for new hardware and will not be possible on older, existing RDMA hardware. 
 
-FreeFlow and MasQ high jack the \texttt{libibverbs} libraries, why not high jack the character devices themselves?
-Why not high jack just rdmacm itself?
-Actually, I think Mellanox might be going this direction with shared HCAs.
-They are kind of acting like ``proxy'' HCAs.
+This comes, in part, from the direction and substantial investment Mellanox is making in this space.
+Unfortunately, while projects like FreeFlow and MasQ are desirable from an accessibility perspective, they suffer from a number of problems.
+First, much of the RDMA space is industry driven to begin with, especially given how complex and hardware specific the RDMA protocol and code base is.
+It's difficult for non-industry driven solutions to remain relevant as they would have to continually pull and patch upstream changes in the RDMA protocol/code base, which is difficult to maintain.
+Second, as shown by the data, purely in software approaches require substantial CPU sacrifices and suffer in scalability. 
+This indicates that at least part of the RDMA in container solution must involve a form of hardware offload.
+Third, for high performance computing environments, the security and support provided by vendor support solutions is unmatched when compared to small research projects like FreeFlow. 
+It would seem obvious these environments should rely on vendor supported solutions for this reason alone.
 
-Likely moving more toward hardware implementations -> more proprietary.
+In terms of what RDMA tooling will look like in this future, it does appear that the RDMA in container solution will integrate closely with existing container isolation tooling.
+Management of paravirtualized RDMA devices is already possible using the \texttt{rdma} CLI from the \texttt{iproute2} package, similar to using the \texttt{ip} CLI for network namespace management, and support for the \texttt{rdma} CLI appears to be growing.
 
-Likely merging more RDMA NIC configurations into kernel drivers to get container support for free, iow interacting with RDMA NICs similarly to standard Ethernet NICs.
-
-Maybe using Calico?
-% todo: add new information from rdma driver commits (like rdma tx flows)
 
 \section{Conclusion}
 With container adoption rising across the industry, so too is 
@@ -648,6 +666,16 @@ You are at the mercy of Mellanox though.
 
 The paravirtualized solutions seem like a good alternative, but they require a lot of maintenance to keep up to date, especially with how complex and industry-driven the RDMA code base is.
 
+% while projects like FreeFlow are available to use now, and work as advertised, they don't seem the most stable and is not maintained, thus is likely unusable in production.
+
+% while this isn't the most exciting of conclusions, it's likely that the best RDMA-in-container solution is going to be industry backed solutions
+
+\section{Acknowledgments}
+I would like to sincerely thank my thesis advisor, Dr.\ Ryan Stutsman, for all of his support in writing this thesis.
+I would also like to thank Joe Breen at the University of Utah Center for High Performance Computing for all of his guidance in the space of containers and networking.
+
+\section{Availability}
+This thesis, all of the code used to run RDMA-in-container experiments, and the raw data collected from said experiments is open sourced and available at \newline\href{https://github.com/emersonford/thesis}{https://github.com/emersonford/thesis}.
 
 \pagebreak
 \printbibliography{}
