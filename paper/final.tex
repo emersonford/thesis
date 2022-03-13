@@ -576,12 +576,14 @@ Thus, while these characteristics are not necessarily generalizable to all hardw
 % How to test:
 % Uninstall Mellanox OFED drivers (use ./uninstall.sh in MLNX_OFED)
 % Install `rdma-core` and `perftest`
+% Run `modprobe -rv mlx5_ib` and reboot.
 % Bring up SoftRoCE RDMA devices with `rdma link`
 % Disable RoCE on the underlying link (https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1877270)
 %
 % Other links:
 % https://github.com/linux-rdma/rdma-core/blob/master/Documentation/rxe.md
 % https://community.mellanox.com/s/article/howto-configure-soft-roce
+
 
 \subsection{Software Solutions: SoftRoCE}
 SoftRoCE is a full software implementation of a RoCE-capable RDMA stack that can be used to create virtualized RDMA devices that run on top of existing Ethernet NICs~\cite{softroceoverview}. 
