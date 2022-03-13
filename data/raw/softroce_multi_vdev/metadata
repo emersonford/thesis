@@ -1,0 +1,7 @@
+host1: amd021.utah.cloudlab.us
+host1_kernel: 5.13.0-35
+host1_os: ubuntu21.10
+host2: amd022.utah.cloudlab.us
+host2_kernel: 5.13.0-35
+host2_os: ubuntu21.10
+command: ['/opt/homebrew/Cellar/python@3.10/3.10.2/Frameworks/Python.framework/Versions/3.10/Resources/Python.app/Contents/MacOS/Python', './old_multi_vdevice_softroce_tests.py', '--host1', 'amd021.utah.cloudlab.us', '--host2', 'amd022.utah.cloudlab.us', '--user', 'emerso0', '--if-name', 'enp65s0f0np0', '--pcie_id', '0000:41:00.0']
