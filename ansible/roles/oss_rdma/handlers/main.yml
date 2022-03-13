@@ -1,0 +1,10 @@
+---
+- name: Reboot host
+  reboot:
+    reboot_timeout: 3600
+    connect_timeout: 5
+    post_reboot_delay: 60
+  notify: Refresh facts after reboot
+
+- name: Refresh facts after reboot
+  setup:

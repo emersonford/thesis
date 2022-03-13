@@ -35,3 +35,25 @@
     append: yes
     groups:
       - docker
+
+- name: Create MLNX Dockerfile
+  become: yes
+  become_user: "{{ ansible_user }}"
+  template:
+    dest: '~/Dockerfile-MLNX'
+    mode: '644'
+    src: 'Dockerfile-MLNX'
+  when: mlnx_ofed_version is defined
+  notify:
+    - build Dockerfile-MLNX
+
+- name: Create OSS RDMA Dockerfile
+  become: yes
+  become_user: "{{ ansible_user }}"
+  template:
+    dest: '~/Dockerfile-RDMA_OSS'
+    mode: '644'
+    src: 'Dockerfile-RDMA_OSS'
+  when: mlnx_ofed_version is not defined
+  notify:
+    - build Dockerfile-RDMA_OSS

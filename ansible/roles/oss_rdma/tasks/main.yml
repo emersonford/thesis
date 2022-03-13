@@ -6,3 +6,23 @@
   loop:
     - rdma-core
     - perftest
+
+- name: check installed kernel modules
+  shell: "lsmod | awk '{print $1}'"
+  changed_when: false
+  register: lsmod_output
+
+- name: disable mlx5_ib module
+  command: 'modprobe -rv mlx5_ib'
+  ignore_errors: yes
+  notify: Reboot host
+  when: lsmod_output.stdout is search("mlx5_ib")
+
+- name: disable mlx4_ib module
+  command: 'modprobe -rv mlx4_ib'
+  ignore_errors: yes
+  notify: Reboot host
+  when: lsmod_output.stdout is search("mlx4_ib")
+
+- name: Force all handlers to run
+  meta: flush_handlers

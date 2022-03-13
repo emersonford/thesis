@@ -45,6 +45,6 @@
   hosts: no_mlnx_ofed
   roles:
     - docker
-    - cpufreq
     - sysstat
     - oss_rdma
+    - cpufreq

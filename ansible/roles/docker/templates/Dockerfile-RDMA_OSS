@@ -1,0 +1,21 @@
+ARG UBUNTU_VERSION=20.04
+
+FROM ubuntu:${UBUNTU_VERSION}
+
+# Rescope ARGS
+ARG UBUNTU_VERSION
+
+WORKDIR /root
+
+RUN apt-get update && apt-get -y upgrade
+
+# Install necessary packages.
+RUN apt-get -y install \
+        iproute2 \
+        rdma-core \
+        perftest
+
+RUN apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+
+CMD ["/bin/bash"]

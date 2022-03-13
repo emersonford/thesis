@@ -1,0 +1,12 @@
+---
+- name: build Dockerfile-MLNX
+  become: yes
+  command: 'docker build -f Dockerfile-MLNX . -t rdma-mlnx'
+  args:
+    chdir: '~{{ ansible_user }}'
+
+- name: build Dockerfile-RDMA_OSS
+  become: yes
+  command: 'docker build -f Dockerfile-RDMA_OSS . -t rdma-oss'
+  args:
+    chdir: '~{{ ansible_user }}'

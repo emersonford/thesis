@@ -39,6 +39,6 @@ all:
     no_mlnx_ofed:
       hosts:
         no_mlnx_ofed_node1:
-          ansible_host: amd015.utah.cloudlab.us
+          ansible_host: amd021.utah.cloudlab.us
         no_mlnx_ofed_node2:
-          ansible_host: amd019.utah.cloudlab.us
+          ansible_host: amd022.utah.cloudlab.us

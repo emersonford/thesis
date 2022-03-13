@@ -1,0 +1,33 @@
+ARG UBUNTU_VERSION=20.04
+ARG MLNX_OFED_VERSION="{{ mlnx_ofed_version }}"
+
+FROM ubuntu:${UBUNTU_VERSION}
+
+# Rescope ARGS
+ARG UBUNTU_VERSION
+ARG MLNX_OFED_VERSION
+
+WORKDIR /root
+
+RUN apt-get update && apt-get -y upgrade
+
+# Install necessary packages.
+RUN apt-get -y install curl \
+        lsb-release \
+        git \
+        build-essential \
+        g++ \
+        libnl-3-dev \
+        libnl-route-3-dev \
+        libcap2 \
+        iproute2
+
+# Install RDMA drivers.
+RUN curl "http://content.mellanox.com/ofed/MLNX_OFED-${MLNX_OFED_VERSION}/MLNX_OFED_LINUX-${MLNX_OFED_VERSION}-ubuntu${UBUNTU_VERSION}-x86_64.tgz" | tar -xz
+
+RUN cd "MLNX_OFED_LINUX-${MLNX_OFED_VERSION}-ubuntu${UBUNTU_VERSION}-x86_64" && ./mlnxofedinstall --user-space-only --without-fw-update --all --force
+
+RUN apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+
+CMD ["/bin/bash"]
