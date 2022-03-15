@@ -49,7 +49,7 @@ def main(args: argparse.Namespace) -> int:
     data_dir = f"../data/raw/{args.data_dir}_cpu_tests"
 
     makedirs(data_dir, exist_ok=True)
-    with open(f"{data_dir}/metadata", "w") as f:
+    with open(f"{data_dir}/metadata_{args.data_suffix}", "w") as f:
         f.write(f"host1: {args.host1}\nhost2: {args.host2}\ncommand: {cli_command}")
 
     cmd_prefix = f"{args.wrapper} '" if args.wrapper else ""
@@ -62,6 +62,26 @@ def main(args: argparse.Namespace) -> int:
     host2_cpu_count = run(
         ssh_host_2 + ["cat /proc/cpuinfo"], check=True, capture_output=True, text=True
     ).stdout.count("processor\t:")
+
+    run(
+        ssh_host_1
+        + [
+            "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
+        ],
+        text=True,
+        check=True,
+        capture_output=True,
+    )
+
+    run(
+        ssh_host_2
+        + [
+            "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
+        ],
+        text=True,
+        check=True,
+        capture_output=True,
+    )
 
     for c in IB_COMMANDS:
         cmd = f"ib_{c}_bw{' ' + args.args if args.args else ''}"
