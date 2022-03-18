@@ -1,4 +1,4 @@
-ARG UBUNTU_VERSION=20.04
+ARG UBUNTU_VERSION={{ansible_facts['lsb']['release']}}
 ARG MLNX_OFED_VERSION="{{ mlnx_ofed_version }}"
 
 FROM ubuntu:${UBUNTU_VERSION}
@@ -12,7 +12,8 @@ WORKDIR /root
 RUN apt-get update && apt-get -y upgrade
 
 # Install necessary packages.
-RUN apt-get -y install curl \
+RUN DEBIAN_FRONTEND=noninteractive TZ=America/Los_Angeles apt -y install \
+        curl \
         lsb-release \
         git \
         build-essential \
@@ -20,7 +21,8 @@ RUN apt-get -y install curl \
         libnl-3-dev \
         libnl-route-3-dev \
         libcap2 \
-        iproute2
+        iproute2 \
+        iputils-ping
 
 # Install RDMA drivers.
 RUN curl "http://content.mellanox.com/ofed/MLNX_OFED-${MLNX_OFED_VERSION}/MLNX_OFED_LINUX-${MLNX_OFED_VERSION}-ubuntu${UBUNTU_VERSION}-x86_64.tgz" | tar -xz

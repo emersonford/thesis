@@ -1,4 +1,10 @@
 ---
+- name: build ofed-docker image
+  become: yes
+  command: "docker build -f Dockerfile . -t rdma-mlnx-ofed --build-arg D_BASE_IMAGE=ubuntu:{{ansible_facts['lsb']['release']}} --build-arg D_OS=ubuntu{{ansible_facts['lsb']['release']}} --build-arg D_OFED_VERSION={{ mlnx_ofed_version }}"
+  args:
+    chdir: '~{{ ansible_user }}/ofed-docker/ubuntu'
+
 - name: build Dockerfile-MLNX
   become: yes
   command: 'docker build -f Dockerfile-MLNX . -t rdma-mlnx'

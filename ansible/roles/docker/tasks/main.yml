@@ -36,6 +36,16 @@
     groups:
       - docker
 
+- name: Clone ofed-docker repo
+  become: yes
+  become_user: "{{ ansible_user }}"
+  command: 'git clone https://github.com/Mellanox/ofed-docker.git'
+  args:
+    creates: '~/ofed-docker'
+    chdir: '~'
+  notify:
+    - build ofed-docker image
+
 - name: Create MLNX Dockerfile
   become: yes
   become_user: "{{ ansible_user }}"
