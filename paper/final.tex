@@ -390,6 +390,14 @@ Typically, the interposition is done in a part of the logic path that is not hot
 These solutions tend to require custom libraries, add more code complexity, may require heavier CPU utilization, and require frequent updates to stay in line with the underlying RDMA libraries.
 However, they tend to provide close to host-level RDMA performance, tend to scale better than hardware solutions, and can more closely integrate with existing kernel network isolation systems.
 
+% How to test:
+% Install Docker
+% Configure a Docker macvlan network: `docker network create -d macvlan --subnet=192.168.1.0/24 -o parent=ens3f0 -o macvlan_mode=private mynet`
+% Run tests (using rdma_cm to connect, doesn't work without it): docker run --privileged --net=mynet --device=/dev/infiniband --ip 192.168.1.3 -it rdma-mlnx ib_read_bw -d mlx5_0 -R 
+%
+% Other links:
+% https://support.mellanox.com/s/article/docker-roce-macvlan-networking-with-connectx4-connectx5
+
 \subsubsection{Shared HCAs}
 Though perhaps not strictly paravirtual given this solution is now built into the RDMA logic path in the kernel, shared HCA operates similarly to paravirtualized solutions in that it interposes namespace and cgroup restrictions in the RDMA control path.
 This is arguable the most ``batteries not required'' solution of using RDMA in containers as it uses the built in kernel isolation systems, but is still rudimentary is its expressivity of control.
@@ -578,7 +586,7 @@ Thus, while these characteristics are not necessarily generalizable to all hardw
 % Install `rdma-core` and `perftest`
 % Run `modprobe -rv mlx5_ib` and reboot.
 % Bring up SoftRoCE RDMA devices with `rdma link`
-% Disable RoCE on the underlying link (https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1877270)
+% Disable RoCE on the underlying link (https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1877270), this has to be done AFTER `rdma link`.
 %
 % Other links:
 % https://github.com/linux-rdma/rdma-core/blob/master/Documentation/rxe.md
@@ -597,19 +605,53 @@ However, it also come at the cost of massive performance penalties from:
 While some of these are optimized for with the SoftRoCE now being implemented as a kernel driver, SoftRoCE still remains a low performance RDMA solution~\cite{softrocedriver}.
 Thus, SoftRoCE is likely viable only for specific niche use cases, such as for those who don't need the performance of RDMA and are simply seeking to enable RDMA compatibility (e.g.\ an RDMA client inside of a container).
 
-\noindent
-\textbf{Container Network Properties}
+\subsubsection*{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
 	\item[Network Isolation] provides full container network isolation
 	\item[Controllability] routing policies and traffic shaping are possible and fully configurable
 	\item[Resource Utilization] requires significant CPU and memory to run the RDMA stack
 \end{description}
 
-% todo
-[[ADD RDMA PERFORMANCE GRAPHS HERE]]
+\subsubsection*{Performance Tests}
+The following tests were performed on Cloudlab with two d6515 hosts, which have a 32 core AMD 7452 at 2.35GHz CPU, 128GB RAM, and a dual port ConnectX--5 100 GB NIC~\cite{cloudlab}. 
+Both were running Ubuntu 21.10 with Linux kernel version 5.13.0-35\footnote{Linux kernel version 5.8 on Ubuntu 20.04 appears to have a SoftRoCE bug that caused multiple kernel panics and was thus unusable.}, and were using the open source \texttt{rdma-core} and \texttt{perftest} packages.
 
-\noindent
-\textbf{Miscellaneous Comments}
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{softroce_basic_lat.png}
+	}
+	\caption{Latency Tests}%
+	\label{fig:softroce_latency}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{softroce_basic_bw.png}
+	}
+	\caption{Bandwidth Tests}%
+	\label{fig:softroce_bandwidth}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{softroce_cpu.png}
+	}
+	\caption{CPU Utilization}%
+	\label{fig:softroce_cpu}
+\end{figure}
+
+Figures~\ref{fig:softroce_latency},~\ref{fig:softroce_bandwidth}, and~\ref{fig:softroce_cpu} were all performed with either a single SoftRoCE NIC or a single raw RDMA device.
+Figure~\ref{fig:softroce_latency} shows a significant increase in both latency and deviation in latency when compared to using a non-SoftRoCE NIC (the non-SoftRoCE NIC also has error bands, but they are so small they are imperceivable in the graph).
+Evidently, SoftRoCE cannot provide the same latency guarantees as a host RDMA device.
+Figure~\ref{fig:softroce_bandwidth} shows 
+
+
+
+
+\subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
 	\item[Scalability Limits] cannot scale due to CPU contention
 	\item[Proprietary] open source kernel driver that has been upstreamed, so it is available to all Linux users
