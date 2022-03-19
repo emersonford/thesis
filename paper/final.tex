@@ -16,7 +16,7 @@
 \usepackage[inline]{enumitem}
 \usepackage{siunitx}
 \usepackage[skip=2pt]{caption}
-\usepackage{hyperref}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
 
 \usepackage{tikz}
 \usetikzlibrary{fadings}
@@ -613,7 +613,7 @@ Thus, SoftRoCE is likely viable only for specific niche use cases, such as for t
 \end{description}
 
 \subsubsection*{Performance Tests}
-The following tests were performed on Cloudlab with two d6515 hosts, which have a 32 core AMD 7452 at 2.35GHz CPU, 128GB RAM, and a dual port ConnectX--5 100 GB NIC~\cite{cloudlab}. 
+All of the following tests were performed on Cloudlab with two d6515 hosts, which have a 32 core AMD 7452 at 2.35GHz CPU, 128GB RAM, and a dual port ConnectX--5 100 GB NIC~\cite{cloudlab}. 
 Both were running Ubuntu 21.10 with Linux kernel version 5.13.0-35\footnote{Linux kernel version 5.8 on Ubuntu 20.04 appears to have a SoftRoCE bug that caused multiple kernel panics and was thus unusable.}, and were using the open source \texttt{rdma-core} and \texttt{perftest} packages.
 
 \begin{figure}
@@ -643,13 +643,39 @@ Both were running Ubuntu 21.10 with Linux kernel version 5.13.0-35\footnote{Linu
 	\label{fig:softroce_cpu}
 \end{figure}
 
-Figures~\ref{fig:softroce_latency},~\ref{fig:softroce_bandwidth}, and~\ref{fig:softroce_cpu} were all performed with either a single SoftRoCE NIC or a single raw RDMA device.
-Figure~\ref{fig:softroce_latency} shows a significant increase in both latency and deviation in latency when compared to using a non-SoftRoCE NIC (the non-SoftRoCE NIC also has error bands, but they are so small they are imperceivable in the graph).
-Evidently, SoftRoCE cannot provide the same latency guarantees as a host RDMA device.
-Figure~\ref{fig:softroce_bandwidth} shows 
+Figures~\ref{fig:softroce_latency},~\ref{fig:softroce_bandwidth}, and~\ref{fig:softroce_cpu} were all performed with either a single SoftRoCE device (labeled \texttt{rxe}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
+Figure~\ref{fig:softroce_latency} shows a significant increase in both latency and deviation in latency when compared to using a non-SoftRoCE device (the non-SoftRoCE device also has error bands, but they are so small they are imperceivable in the graph).
+Figure~\ref{fig:softroce_bandwidth} highlights how a single SoftRoCE device has both a bandwidth and message rate potential that is significantly less than that of a non-SoftRoCE device. 
+Figure~\ref{fig:softroce_cpu} shows the total CPU usage during an \texttt{ib\_read\_bw} test on both the client and server. 
+Unsurprisingly, SoftRoCE usage resulted in more CPU utilization than a non-SoftRoCE device on the client. 
+Furthermore, the total CPU usage across both the server and client is greater with a SoftRoCE device than on a non-SoftRoCE device, which is expected.
+In normal RDMA, the server requires no CPU utilization (for one-sided operations) as the RDMA device itself handles that.
+With SoftRoCE, the server has to spend CPU cycles processing incoming packets, resulting in higher CPU utilization.
+One noticable feature about the CPU graphs is how SoftRoCE usage can result in a CPU utilization of 200\%. 
+This is likely due to one CPU core being entirely used for SoftRoCE processing and one CPU core being entirely used for the actual \texttt{ib\_read\_bw} program.
 
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{softroce_multi_vdevs.png}
+	}
+	\caption{CPU Utilization}%
+	\label{fig:softroce_multi_vdevs}
+\end{figure}
 
+Figure~\ref{fig:softroce_multi_vdevs} was performed with multiple SoftRoCE devices created on both the client and server, with a single \texttt{ib\_read\_bw} test running on each device.
+For each SoftRoCE device, a \texttt{macvlan} interface was created on the RDMA device's interface to serve as the SoftRoCE device's parent, which is necessary as an interface can only parent one SoftRoCE device.
+As an example, with $\texttt{pairs} = 3$, both the client and server had 3 macvlan interfaces and 3 SoftRoCE devices provisioned. 
+SoftRoCE device 1 on the client connected to the \texttt{ib\_read\_bw} server running on SoftRoCE device 1 on the server.
+Similarly, SoftRoCE device 2 on the client connected to the \texttt{ib\_read\_bw} server running on SoftRoCE device 2 on the server, and so on.
 
+This data highlights several things.
+First, use of SoftRoCE alone appears to be capable of fully saturating the underlying NIC's bandwidth.
+In this case, for \texttt{ib\_read\_bw}, it took approximately 18 pairs of SoftRoCE devices, approximately 30 CPU cores worth of CPU cycles on the server, and approximately 19 CPU cores worth of CPU cycles on the client to saturate the underlying NIC's bandwidth (i.e.\ match the bandwidth performance of the non-SoftRoCE device).
+Second, even after saturating the underlying NIC's bandwidth, server CPU utilization continued to climb linearly with each additional SoftRoCE device.
+
+All in all, these graphs highlight how SoftRoCE fails to match the bandwidth, latency, and CPU performance of a raw RDMA device, and is not desirable for use in performance sensitive environments.
+SoftRoCE can scale to saturate the underlying NIC's bandwidth, but requires substantial CPU utilization which significantly hurts its scalability.
 
 \subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
@@ -718,8 +744,9 @@ The paravirtualized solutions seem like a good alternative, but they require a l
 I would like to sincerely thank my thesis advisor, Dr.\ Ryan Stutsman, for all of his support in writing this thesis.
 I would also like to thank Joe Breen at the University of Utah Center for High Performance Computing for all of his guidance in the space of containers and networking.
 
-\section{Availability}
+\section{Availability \& Reproducibility}
 This thesis, all of the code used to run RDMA-in-container experiments, and the raw data collected from said experiments is open sourced and available at \newline\href{https://github.com/emersonford/thesis}{https://github.com/emersonford/thesis}.
+All of the data produced for this thesis can be reproduced following the instructions listed in the Github repo's \texttt{README.md}.
 
 \pagebreak
 \printbibliography{}
