@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from os import makedirs, getpid
+from os import getpid, makedirs
 from subprocess import PIPE, Popen, run
 from time import sleep
 
@@ -23,7 +23,7 @@ def main(args: argparse.Namespace) -> int:
     ssh_host_1 = ["ssh", f"{args.user}@{args.host1}"]
     ssh_host_2 = ["ssh", f"{args.user}@{args.host2}"]
 
-    data_dir = "../data/raw/softroce_multi_vdev"
+    data_dir = "../data/raw/shared_hca_multi_dev"
     makedirs(data_dir, exist_ok=True)
 
     cli_command = psutil.Process(getpid()).cmdline()
@@ -40,15 +40,9 @@ def main(args: argparse.Namespace) -> int:
 
     for c in IB_COMMANDS:
         with (
-            open(
-                f"{data_dir}/ib_{c}_bw.txt", "w"
-            ) as bw_file,
-            open(
-                f"{data_dir}/{c}_cpu_server.txt", "w"
-            ) as cpu_file_server,
-            open(
-                f"{data_dir}/{c}_cpu_client.txt", "w"
-            ) as cpu_file_client,
+            open(f"{data_dir}/ib_{c}_bw.txt", "w") as bw_file,
+            open(f"{data_dir}/{c}_cpu_server.txt", "w") as cpu_file_server,
+            open(f"{data_dir}/{c}_cpu_client.txt", "w") as cpu_file_client,
         ):
             bw_file.write(
                 "#pairs\tAgg BW average[MB/sec]\tAgg MsgRate[Mpps]\tBW averages[MB/sec]\tMsgRates[Mpps]\n"
@@ -58,7 +52,7 @@ def main(args: argparse.Namespace) -> int:
 
     for pair_count in PAIRS_COUNT:
         if pair_count == 1:
-            print("Creating SoftRoCE device rxe0...")
+            print("Checking if the docker network needs to be created...")
 
             run(
                 ssh_host_1
@@ -73,7 +67,7 @@ def main(args: argparse.Namespace) -> int:
             run(
                 ssh_host_1
                 + [
-                    f"sudo rdma link | grep rxe0 || sudo rdma link add rxe0 type rxe netdev {args.if_name} && sudo devlink dev param set pci/{args.pcie_id} name enable_roce value false cmode driverinit && sudo devlink dev reload pci/{args.pcie_id}"
+                    f"docker network ls | grep mynet || docker network create -d macvlan --subnet=192.168.1.0/24 -o parent={args.if_name} -o macvlan_mode=private mynet"
                 ],
                 text=True,
                 check=True,
@@ -93,31 +87,7 @@ def main(args: argparse.Namespace) -> int:
             run(
                 ssh_host_2
                 + [
-                    f"sudo rdma link | grep rxe0 || sudo rdma link add rxe0 type rxe netdev {args.if_name} && sudo devlink dev param set pci/{args.pcie_id} name enable_roce value false cmode driverinit && sudo devlink dev reload pci/{args.pcie_id}"
-                ],
-                text=True,
-                check=True,
-                capture_output=True,
-            )
-
-        elif pair_count > 1:
-            rxe_iface_id = pair_count - 1
-            print(f"Creating SoftRoCE device rxe{rxe_iface_id}...")
-
-            run(
-                ssh_host_1
-                + [
-                    f"sudo ip link add macvlan{rxe_iface_id} link {args.if_name} type macvlan mode private && sudo ip addr add 192.168.1.{pair_count * 2 - 1}/24 dev macvlan{rxe_iface_id} && sudo ip link set macvlan{rxe_iface_id} up && sudo rdma link add rxe{rxe_iface_id} type rxe netdev macvlan{rxe_iface_id}"
-                ],
-                text=True,
-                check=True,
-                capture_output=True,
-            )
-
-            run(
-                ssh_host_2
-                + [
-                    f"sudo ip link add macvlan{rxe_iface_id} link {args.if_name} type macvlan mode private && sudo ip addr add 192.168.1.{pair_count * 2}/24 dev macvlan{rxe_iface_id} && sudo ip link set macvlan{rxe_iface_id} up && sudo rdma link add rxe{rxe_iface_id} type rxe netdev macvlan{rxe_iface_id}"
+                    f"docker network ls | grep mynet || docker network create -d macvlan --subnet=192.168.1.0/24 -o parent={args.if_name} -o macvlan_mode=private mynet"
                 ],
                 text=True,
                 check=True,
@@ -125,24 +95,27 @@ def main(args: argparse.Namespace) -> int:
             )
 
         for c in IB_COMMANDS:
-            print(
-                f"Running IB command `ib_{c}_bw` with pair_count = {pair_count}..."
-            )
+            print(f"Running IB command `ib_{c}_bw` with pair_count = {pair_count}...")
 
             # So turns out SSH won't propagate SIGTERM (especially if you're not allocating a pty),
             # which could leave behind zombie servers. Ensure we nuke them before our tests.
-            run(ssh_host_1 + ["pkill 'ib_(send|read|write)_(bw|lat)'"])
-            run(ssh_host_2 + ["pkill 'ib_(send|read|write)_(bw|lat)'"])
+            run(ssh_host_1 + ["sudo pkill -9 'ib_(send|read|write)_(bw|lat)'"])
+            run(ssh_host_2 + ["sudo pkill -9 'ib_(send|read|write)_(bw|lat)'"])
 
             ib_servers: list[Popen] = []
             ib_clients: list[Popen] = []
 
             for pnum in range(1, pair_count + 1):
+                server_ip = f"192.168.1.{pnum * 2 + 1}"
+                client_ip = f"192.168.1.{pnum * 2 + 2}"
+                # Need to manually select the GID index since it selects the wrong one by default.
+                gid_index = 2 * (pnum - 1) + args.gid_start
+
                 ib_servers.append(
                     Popen(
                         ssh_host_1
                         + [
-                            f"ib_{c}_bw -d rxe{pnum - 1} -D {IB_REPORTING_INTERVAL} --run_infinitely -s {RDMA_SIZE}"
+                            f"docker run --privileged --net=mynet --device=/dev/infiniband --ip {server_ip} rdma-mlnx bash -c 'ib_{c}_bw -d {args.ib_dev} -x {gid_index} -D {IB_REPORTING_INTERVAL} --run_infinitely -s {RDMA_SIZE}'"
                         ],
                         text=True,
                         stdout=PIPE,
@@ -150,13 +123,13 @@ def main(args: argparse.Namespace) -> int:
                     )
                 )
 
-                sleep(1)
+                sleep(0.5)
 
                 ib_clients.append(
                     Popen(
                         ssh_host_2
                         + [
-                            f"ib_{c}_bw -d rxe{pnum - 1} -D {IB_REPORTING_INTERVAL} --run_infinitely -s {RDMA_SIZE} {args.host1}"
+                            f"docker run --privileged --net=mynet --device=/dev/infiniband --ip {client_ip} rdma-mlnx bash -c 'ib_{c}_bw -d {args.ib_dev} -x {gid_index} -D {IB_REPORTING_INTERVAL} --run_infinitely -s {RDMA_SIZE} {server_ip}'"
                         ],
                         text=True,
                         stdout=PIPE,
@@ -164,7 +137,7 @@ def main(args: argparse.Namespace) -> int:
                     )
                 )
 
-                sleep(1)
+                sleep(0.5)
 
                 if (
                     ib_servers[-1].returncode is not None
@@ -186,7 +159,7 @@ def main(args: argparse.Namespace) -> int:
                 ssh_host_1 + [f"sar {CPU_MEASURE_TIME} 1"],
                 text=True,
                 stdout=PIPE,
-                stderr=PIPE
+                stderr=PIPE,
             )
 
             cpu_client = Popen(
@@ -201,10 +174,14 @@ def main(args: argparse.Namespace) -> int:
 
             if cpu_server.returncode != 0 or cpu_client.returncode != 0:
                 if cpu_server.returncode != 0:
-                    print(f"Failed to get CPU measurements on {args.host1}: {cpu_server.communicate()}")
+                    print(
+                        f"Failed to get CPU measurements on {args.host1}: {cpu_server.communicate()}"
+                    )
 
                 if cpu_client.returncode != 0:
-                    print(f"Failed to get CPU measurements on {args.host2}: {cpu_client.communicate()}")
+                    print(
+                        f"Failed to get CPU measurements on {args.host2}: {cpu_client.communicate()}"
+                    )
 
                 return 1
 
@@ -220,14 +197,12 @@ def main(args: argparse.Namespace) -> int:
             for s in ib_servers:
                 s.terminate()
 
-            run(ssh_host_1 + ["pkill 'ib_(send|read|write)_(bw|lat)'"])
-            run(ssh_host_2 + ["pkill 'ib_(send|read|write)_(bw|lat)'"])
+            run(ssh_host_1 + ["sudo pkill -9 'ib_(send|read|write)_(bw|lat)'"])
+            run(ssh_host_2 + ["sudo pkill -9 'ib_(send|read|write)_(bw|lat)'"])
 
             ib_multi_bw_results = list(
                 map(
-                    lambda data: list(
-                        filter(lambda s: len(s) > 0, data.split("\n"))
-                    ),
+                    lambda data: list(filter(lambda s: len(s) > 0, data.split("\n"))),
                     ib_clients_data,
                 )
             )
@@ -253,31 +228,25 @@ def main(args: argparse.Namespace) -> int:
             cpu_server_avg = (
                 100
                 - float(
-                    list(
-                        filter(lambda s: len(s) > 0, cpu_server_data.split("\n"))
-                    )[-1].split()[-1]
+                    list(filter(lambda s: len(s) > 0, cpu_server_data.split("\n")))[
+                        -1
+                    ].split()[-1]
                 )
             ) * host1_cpu_count
 
             cpu_client_avg = (
                 100
                 - float(
-                    list(
-                        filter(lambda s: len(s) > 0, cpu_client_data.split("\n"))
-                    )[-1].split()[-1]
+                    list(filter(lambda s: len(s) > 0, cpu_client_data.split("\n")))[
+                        -1
+                    ].split()[-1]
                 )
             ) * host2_cpu_count
 
             with (
-                open(
-                    f"{data_dir}/ib_{c}_bw.txt", "a"
-                ) as bw_file,
-                open(
-                    f"{data_dir}/{c}_cpu_server.txt", "a"
-                ) as cpu_file_server,
-                open(
-                    f"{data_dir}/{c}_cpu_client.txt", "a"
-                ) as cpu_file_client,
+                open(f"{data_dir}/ib_{c}_bw.txt", "a") as bw_file,
+                open(f"{data_dir}/{c}_cpu_server.txt", "a") as cpu_file_server,
+                open(f"{data_dir}/{c}_cpu_client.txt", "a") as cpu_file_client,
             ):
                 bw_file.write(
                     f"{pair_count}\t{bw_agg_avg}\t{bw_agg_msg_rate}\t{bw_avgs}\t{bw_msg_rates}\n"
@@ -290,18 +259,17 @@ def main(args: argparse.Namespace) -> int:
 
 parser = argparse.ArgumentParser(
     description="""
-Run multi virtual RDMA device tests on two hosts.
+Run multi shared HCA RDMA device tests on two hosts.
 
-This assumes the OSS RDMA stack has been installed and the RoCE NICs are on subnet 192.168.1.0/24. This can be done with:
-1. Uninstall MLNX_OFED and install `rdma-core` and `perftest`.
-2. `sudo modprobe -rv mlx5_ib` and reboot.
+This assumes the docker network has been configured. This can be done with docker network create -d macvlan --subnet=192.168.1.0/24 -o parent=ens3f0 -o macvlan_mode=private mynet. This also assumes the RoCE NIC is on subnet 192.168.1.0/24.
 """
 )
-parser.add_argument("--host1", metavar="HOSTNAME", type=str)
-parser.add_argument("--host2", metavar="HOSTNAME", type=str)
-parser.add_argument("--user", metavar="USERNAME", type=str)
-parser.add_argument("--if-name", type=str)
-parser.add_argument("--pcie_id", type=str)
+parser.add_argument("--host1", metavar="HOSTNAME", type=str, required=True)
+parser.add_argument("--host2", metavar="HOSTNAME", type=str, required=True)
+parser.add_argument("--user", metavar="USERNAME", type=str, required=True)
+parser.add_argument("--if-name", type=str, required=True)
+parser.add_argument("--ib-dev", type=str, required=True)
+parser.add_argument("--gid-start", type=int, required=True)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -318,5 +286,17 @@ if __name__ == "__main__":
             p.kill()
 
         # Cleanup any lingering servers that might stick around.
-        run(["ssh", f"{args.user}@{args.host1}", "pkill 'ib_(send|read|write)_(bw|lat)'"])
-        run(["ssh", f"{args.user}@{args.host2}", "pkill 'ib_(send|read|write)_(bw|lat)'"])
+        run(
+            [
+                "ssh",
+                f"{args.user}@{args.host1}",
+                "sudo pkill -9 'ib_(send|read|write)_(bw|lat)'",
+            ]
+        )
+        run(
+            [
+                "ssh",
+                f"{args.user}@{args.host2}",
+                "sudo pkill -9 'ib_(send|read|write)_(bw|lat)'",
+            ]
+        )

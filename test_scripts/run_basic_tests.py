@@ -19,6 +19,12 @@ IB_COMMANDS = [
 
 
 def main(args: argparse.Namespace) -> int:
+    if not args.server_ip:
+        args.server_ip = args.host1
+
+    if not args.client_ip:
+        args.client_ip = args.host2
+
     ssh_host_1 = ["ssh", f"{args.user}@{args.host1}"]
     ssh_host_2 = ["ssh", f"{args.user}@{args.host2}"]
 
@@ -57,19 +63,20 @@ def main(args: argparse.Namespace) -> int:
         print(f"Running `{cmd_prefix}{cmd}{cmd_postfix}`...")
 
         ib_server = Popen(
-            ssh_host_1
-            + [f"{cmd_prefix}{cmd}{cmd_postfix}"],
+            ssh_host_1 + [f"{cmd_prefix}{cmd}{cmd_postfix}".format(ip=args.server_ip)],
             text=True,
             stdout=DEVNULL,
             stderr=DEVNULL,
         )
 
-        sleep(1)
+        sleep(0.5)
 
         ib_client = run(
             ssh_host_2
             + [
-                f"{cmd_prefix}{cmd} {args.host1}{cmd_postfix}"
+                f"{cmd_prefix}{cmd} {args.server_ip}{cmd_postfix}".format(
+                    ip=args.client_ip
+                )
             ],
             capture_output=True,
             text=True,
@@ -93,6 +100,8 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("--host1", metavar="HOSTNAME", type=str, required=True)
 parser.add_argument("--host2", metavar="HOSTNAME", type=str, required=True)
+parser.add_argument("--server-ip", metavar="IP", type=str)
+parser.add_argument("--client-ip", metavar="IP", type=str)
 parser.add_argument("--user", metavar="USERNAME", type=str, required=True)
 parser.add_argument("--data-dir", type=str, required=True)
 parser.add_argument("--data-suffix", type=str, required=True)

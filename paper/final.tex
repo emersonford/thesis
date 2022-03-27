@@ -407,8 +407,7 @@ Paired with restricting the \texttt{CAP\_NET\_ADMIN} capability for the containe
 However, as the RDMA device is not made aware of the host's virtual networks, the interface's properties must be valid on the host's network (e.g.\ the interface must have a valid IP address on the hosts actual network)~\cite{mellanoxdockermacvlan,dockermacvlan}.
 This solution is also typically called macvlan mode.
 
-\noindent
-\textbf{Container Network Properties}
+\subsubsection*{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
 	% todo: fix this part, how does the IP address depend on the NIC?
 	\item[Network Isolation] the only isolation provided is the setting of the IP address and VLAN tags on an isolated interface, the IP address is also dependent on the NIC
@@ -416,11 +415,50 @@ This solution is also typically called macvlan mode.
 	\item[Resource Utilization] aside from GID table entry consumption, resource utilization is identical to normal RDMA usage
 \end{description}
 
-% todo
-[[ADD RDMA PERFORMANCE GRAPHS HERE]]
+\subsubsection*{Performance Tests}
+All of the following tests were performed on Cloudlab with two c6525-100g hosts, which have a 24 core AMD 7402P at 2.80GHz CPU, 128GB RAM, and a dual port ConnectX--5 Ex 100 Gbit NIC~\cite{cloudlab}. 
+Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using the Mellanox OFED RDMA stack.
 
-\noindent
-\textbf{Miscellaneous Comments}
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{shared_hca_basic_lat.png}
+	}
+	\caption{Latency Tests}%
+	\label{fig:shared_hca_latency}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{shared_hca_basic_bw.png}
+	}
+	\caption{Bandwidth Tests}%
+	\label{fig:shared_hca_bandwidth}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{shared_hca_cpu.png}
+	}
+	\caption{CPU Utilization}%
+	\label{fig:shared_hca_cpu}
+\end{figure}
+
+foobarbar
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{shared_hca_multi_dev.png}
+	}
+	\caption{CPU Utilization}%
+	\label{fig:shared_hca_multi_vdev}
+\end{figure}
+
+
+\subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
 	\item[Scalability Limits] can only scale to the size of the NIC's GID table, usually below 150 entries
 	\item[Proprietary] these features are built into the kernel's RDMA stack thus are available to everyone
@@ -613,7 +651,7 @@ Thus, SoftRoCE is likely viable only for specific niche use cases, such as for t
 \end{description}
 
 \subsubsection*{Performance Tests}
-All of the following tests were performed on Cloudlab with two d6515 hosts, which have a 32 core AMD 7452 at 2.35GHz CPU, 128GB RAM, and a dual port ConnectX--5 100 GB NIC~\cite{cloudlab}. 
+All of the following tests were performed on Cloudlab with two d6515 hosts, which have a 32 core AMD 7452 at 2.35GHz CPU, 128GB RAM, and a dual port ConnectX--5 100 Gbit NIC~\cite{cloudlab}. 
 Both were running Ubuntu 21.10 with Linux kernel version 5.13.0-35\footnote{Linux kernel version 5.8 on Ubuntu 20.04 appears to have a SoftRoCE bug that caused multiple kernel panics and was thus unusable.}, and were using the open source \texttt{rdma-core} and \texttt{perftest} packages.
 
 \begin{figure}
@@ -657,13 +695,13 @@ This is likely due to one CPU core being entirely used for SoftRoCE processing a
 \begin{figure}
 	\centering
 	\resizebox{0.8\linewidth}{!}{
-		\includegraphics{softroce_multi_vdevs.png}
+		\includegraphics{softroce_multi_vdev.png}
 	}
 	\caption{CPU Utilization}%
-	\label{fig:softroce_multi_vdevs}
+	\label{fig:softroce_multi_vdev}
 \end{figure}
 
-Figure~\ref{fig:softroce_multi_vdevs} was performed with multiple SoftRoCE devices created on both the client and server, with a single \texttt{ib\_read\_bw} test running on each device.
+Figure~\ref{fig:softroce_multi_vdev} was performed with multiple SoftRoCE devices created on both the client and server, with a single \texttt{ib\_read\_bw} test running on each device with a byte size of 65536.
 For each SoftRoCE device, a \texttt{macvlan} interface was created on the RDMA device's interface to serve as the SoftRoCE device's parent, which is necessary as an interface can only parent one SoftRoCE device.
 As an example, with $\texttt{pairs} = 3$, both the client and server had 3 macvlan interfaces and 3 SoftRoCE devices provisioned. 
 SoftRoCE device 1 on the client connected to the \texttt{ib\_read\_bw} server running on SoftRoCE device 1 on the server.
@@ -672,7 +710,7 @@ Similarly, SoftRoCE device 2 on the client connected to the \texttt{ib\_read\_bw
 This data highlights several things.
 First, use of SoftRoCE alone appears to be capable of fully saturating the underlying NIC's bandwidth.
 In this case, for \texttt{ib\_read\_bw}, it took approximately 18 pairs of SoftRoCE devices, approximately 30 CPU cores worth of CPU cycles on the server, and approximately 19 CPU cores worth of CPU cycles on the client to saturate the underlying NIC's bandwidth (i.e.\ match the bandwidth performance of the non-SoftRoCE device).
-Second, even after saturating the underlying NIC's bandwidth, server CPU utilization continued to climb linearly with each additional SoftRoCE device.
+Second, even after saturating the underlying NIC's bandwidth, client CPU utilization continued to climb linearly with each additional SoftRoCE device.
 
 All in all, these graphs highlight how SoftRoCE fails to match the bandwidth, latency, and CPU performance of a raw RDMA device, and is not desirable for use in performance sensitive environments.
 SoftRoCE can scale to saturate the underlying NIC's bandwidth, but requires substantial CPU utilization which significantly hurts its scalability.
