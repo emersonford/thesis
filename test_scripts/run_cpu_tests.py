@@ -69,26 +69,6 @@ def main(args: argparse.Namespace) -> int:
         ssh_host_2 + ["cat /proc/cpuinfo"], check=True, capture_output=True, text=True
     ).stdout.count("processor\t:")
 
-    run(
-        ssh_host_1
-        + [
-            "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
-        ],
-        text=True,
-        check=True,
-        capture_output=True,
-    )
-
-    run(
-        ssh_host_2
-        + [
-            "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
-        ],
-        text=True,
-        check=True,
-        capture_output=True,
-    )
-
     for c in IB_COMMANDS:
         cmd = f"ib_{c}_bw{' ' + args.args if args.args else ''}"
         print(f"Running CPU test for `{cmd_prefix}{cmd}{cmd_postfix}`...")

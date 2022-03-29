@@ -23,9 +23,9 @@ all:
     connectx5:
       hosts:
         connectx5_node1:
-          ansible_host: amd253.utah.cloudlab.us
+          ansible_host: amd202.utah.cloudlab.us
         connectx5_node2:
-          ansible_host: amd254.utah.cloudlab.us
+          ansible_host: amd189.utah.cloudlab.us
       vars:
         mlnx_ofed_version: '5.5-1.0.3.2'
     connectx5_old:

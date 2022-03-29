@@ -63,27 +63,7 @@ def main(args: argparse.Namespace) -> int:
             run(
                 ssh_host_1
                 + [
-                    "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
-                ],
-                text=True,
-                check=True,
-                capture_output=True,
-            )
-
-            run(
-                ssh_host_1
-                + [
                     f"sudo rdma link | grep rxe0 || sudo rdma link add rxe0 type rxe netdev {args.if_name} && sudo devlink dev param set pci/{args.pcie_id} name enable_roce value false cmode driverinit && sudo devlink dev reload pci/{args.pcie_id}"
-                ],
-                text=True,
-                check=True,
-                capture_output=True,
-            )
-
-            run(
-                ssh_host_2
-                + [
-                    "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
                 ],
                 text=True,
                 check=True,

@@ -1,19 +1,16 @@
 ---
-- name: set scaling governor to performance
-  shell: 'for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo "performance" > $i; done'
-  args:
-    executable: /bin/bash
-  ignore_errors: yes
+- name: Create disable_cpu_scaling.sh
+  become: yes
+  copy:
+    src: "disable_cpu_scaling.sh"
+    dest: "~/disable_cpu_scaling.sh"
+    mode: "744"
+  notify:
+    - run disable_cpu_scaling.sh
 
-# this ensures CPU frequency stays at max frequency 
-- name: disable cpu idle
-  shell: 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'
-  args:
-    executable: /bin/bash
-  ignore_errors: yes
-
-- import_tasks: amd.yml
-  when: "'AuthenticAMD' in ansible_facts['processor']"
-
-- import_tasks: intel.yml
-  when: "'GenuineIntel' in ansible_facts['processor']"
+- name: add disable_cpu_scaling.sh to cron reboot
+  become: yes
+  cron:
+    name: "disable CPU scaling"
+    special_time: reboot
+    job: "~/disable_cpu_scaling.sh"

@@ -38,26 +38,6 @@ def main(args: argparse.Namespace) -> int:
     cmd_prefix = f"{args.wrapper} '" if args.wrapper else ""
     cmd_postfix = "'" if args.wrapper else ""
 
-    run(
-        ssh_host_1
-        + [
-            "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
-        ],
-        text=True,
-        check=True,
-        capture_output=True,
-    )
-
-    run(
-        ssh_host_2
-        + [
-            "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
-        ],
-        text=True,
-        check=True,
-        capture_output=True,
-    )
-
     for c in IB_COMMANDS:
         cmd = f"{c}{' ' + args.args if args.args else ''}"
         print(f"Running `{cmd_prefix}{cmd}{cmd_postfix}`...")

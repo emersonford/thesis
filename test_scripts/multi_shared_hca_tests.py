@@ -57,27 +57,7 @@ def main(args: argparse.Namespace) -> int:
             run(
                 ssh_host_1
                 + [
-                    "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
-                ],
-                text=True,
-                check=True,
-                capture_output=True,
-            )
-
-            run(
-                ssh_host_1
-                + [
                     f"docker network ls | grep mynet || docker network create -d macvlan --subnet=192.168.1.0/24 -o parent={args.if_name} -o macvlan_mode=private mynet"
-                ],
-                text=True,
-                check=True,
-                capture_output=True,
-            )
-
-            run(
-                ssh_host_2
-                + [
-                    "sudo bash -c 'for i in /sys/devices/system/cpu/cpu*/cpuidle/state*/disable; do echo 1 > $i; done'"
                 ],
                 text=True,
                 check=True,

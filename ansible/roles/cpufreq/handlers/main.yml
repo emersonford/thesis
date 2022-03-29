@@ -1,0 +1,6 @@
+---
+- name: run disable_cpu_scaling.sh
+  become: yes
+  command: './disable_cpu_scaling.sh'
+  args:
+    chdir: '~'

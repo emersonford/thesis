@@ -29,7 +29,7 @@ This assumes you're using [Cloudlab](https://www.cloudlab.us/) and have SSH keys
 1. Provision a Cloudlab experiment with the [roce-cluster](https://www.cloudlab.us/show-profile.php?uuid=fbcf91c3-93ba-11ec-9467-e4434b2381fc) profile.
     * Change "Node type to use" to `c6526-100g`.
 2. Change the two hostnames of the `connectx5` group to your Cloudlab hostnames in `ansible/hosts.yaml`. Change `ansible_user` under `vars:` to your Cloudlab username.
-3. Run `ansible-playbook --ssh-common-args "-o StrictHostKeyChecking=no" --inventory-file="./hosts.yaml" --limit connectx5 site.yml` while in the `ansible` directory.
+3. Run `ansible-playbook --ssh-common-args "-o StrictHostKeyChecking=no" --inventory-file="./hosts.yaml" --limit connectx5 site.yml` while in the `ansible` directory. Reboot both hosts after the "Wait for mlnxofedinstall" handler. Rerun the `ansible-playbook` command to completion.
 4. Run the commands listed in `data/shared_hca_*/metadata*` while in the `test_scripts` directory. Take care to replace the `--host1` and `--host2` flags to match your Cloudlab hostnames, and `--user` to match your Cloudlab username. The first argument (`/opt/homebrew/.../Python`) should be replaced with the path to your Python 3.10 binary. 
     * For running the Shared HCA version of `run_basic_tests` and `run_cpu_tests`, a Docker macvlan network must first be created with `docker network ls | grep mynet || docker network create -d macvlan --subnet=192.168.1.0/24 -o parent=ens1f0 -o macvlan_mode=private mynet`.
 6. The data should appear in `data/raw`. You can generate graphs based on the data you just produced by setting `MODE = "shared_hca"` and rerunning all cells in the `*.ipynb` Jupyter notebooks (run `jupyter-notebook` while in the `data` dir).
