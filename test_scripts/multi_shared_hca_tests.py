@@ -74,7 +74,9 @@ def main(args: argparse.Namespace) -> int:
                 capture_output=True,
             )
 
-        for c in IB_COMMANDS:
+        idx = 0
+        while idx < len(IB_COMMANDS):
+            c = IB_COMMANDS[idx]
             print(f"Running IB command `ib_{c}_bw` with pair_count = {pair_count}...")
 
             # So turns out SSH won't propagate SIGTERM (especially if you're not allocating a pty),
@@ -202,8 +204,8 @@ def main(args: argparse.Namespace) -> int:
                     float(res[-1].split()[4]) for res in ib_multi_bw_results
                 )
             except IndexError:
-                print(ib_multi_bw_results)
-                return 1
+                print("Error, retrying...")
+                continue
 
             cpu_server_avg = (
                 100
@@ -233,6 +235,8 @@ def main(args: argparse.Namespace) -> int:
                 )
                 cpu_file_server.write(f"{pair_count}\t{cpu_server_avg}\n")
                 cpu_file_client.write(f"{pair_count}\t{cpu_client_avg}\n")
+
+            idx += 1
 
     return 0
 

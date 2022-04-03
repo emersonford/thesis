@@ -1,3 +1,3 @@
-host1: amd253.utah.cloudlab.us
-host2: amd254.utah.cloudlab.us
-command: ['/opt/homebrew/Cellar/python@3.10/3.10.2/Frameworks/Python.framework/Versions/3.10/Resources/Python.app/Contents/MacOS/Python', './multi_shared_hca_tests.py', '--host1', 'amd253.utah.cloudlab.us', '--host2', 'amd254.utah.cloudlab.us', '--user', 'emerso0', '--if-name', 'ens1f0', '--ib-dev', 'mlx5_2', '--gid-start', '5']
+host1: amd023.utah.cloudlab.us
+host2: amd018.utah.cloudlab.us
+command: ['/opt/homebrew/Cellar/python@3.10/3.10.2/Frameworks/Python.framework/Versions/3.10/Resources/Python.app/Contents/MacOS/Python', './multi_shared_hca_tests.py', '--host1', 'amd023.utah.cloudlab.us', '--host2', 'amd018.utah.cloudlab.us', '--user', 'emerso0', '--if-name', 'ens3f0', '--ib-dev', 'mlx5_0', '--gid-start', '5']
