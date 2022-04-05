@@ -21,7 +21,8 @@
     - Replace first IP in cpp
     - Replace second IP in cpp
     - Replace device idx
-    - Enable verbose logging
+  # - Enable verbose logging in server
+  # - Enable verbose logging in client
     - Build base Docker image
     - Build ffrouter Docker image
     - Build ffclient Docker image

@@ -547,6 +547,10 @@ Hardware solutions rely on functionality built into the RDMA-capable NIC itself.
 While these solutions tend to be the fastest as they require no software interposition from the kernel, they tend to be highly proprietary and costly, require the newest versions of RDMA-capable NICs, and are often not compatible with older RDMA-capable NICs.
 Further, they to have strict scalability limits as hardware resources on NICs are limited.
 
+% References:
+% https://support.mellanox.com/s/article/howto-configure-sr-iov-for-connect-ib-connectx-4-with-kvm--infiniband-x
+% https://docs.nvidia.com/networking/pages/viewpage.action?pageId=52014524#SingleRootIOVirtualization(SRIOV)-settingupsr-iovSettingUpSR-IOV
+
 \subsubsection{SR-IOV}
 As explained in Section~\ref{subsubsec:Control Plane}, SR-IOV is a method of multiplexing RDMA-capable NICs in hardware and is traditionally used in the context of virtual machines.
 It has seen adoption as an RDMA in container solution as each virtual function of an RDMA-capable NIC is exposed as a unique, isolated RDMA device that can then be used by individual containers.

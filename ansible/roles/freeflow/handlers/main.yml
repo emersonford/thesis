@@ -39,11 +39,17 @@
     regexp: 'const char [*]device_name = "mlx5_0";'
     replace: 'const char *device_name = "{{freeflow_device_name}}";'
 
-- name: Enable verbose logging
+- name: Enable verbose logging in server
   replace:
     path: '~{{ ansible_user }}/Freeflow/ffrouter/log.h'
     regexp: '#define LOG_LEVEL 10'
     replace: '#define LOG_LEVEL 1'
+
+- name: Enable verbose logging in client
+  replace:
+    path: '~{{ ansible_user }}/Freeflow/libraries/libibverbs-1.2.1mlnx1/include/infiniband/freeflow-types.h'
+    regexp: '#define PRINT_LOG 0'
+    replace: '#define PRINT_LOG 1'
 
 - name: Build base Docker image
   become: yes

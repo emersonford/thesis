@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Freeflow Fastpath can't complete `ib_*_* -a` so we need to run each size iteratively.
 
 import argparse
 import sys
@@ -15,6 +16,25 @@ IB_COMMANDS = [
     "ib_read_bw",
     "ib_write_bw",
     "ib_send_bw",
+]
+
+SIZES = [
+    2,
+    4,
+    8,
+    16,
+    32,
+    64,
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384,
+    32768,
+    65536,
 ]
 
 
@@ -40,38 +60,50 @@ def main(args: argparse.Namespace) -> int:
     cmd_postfix = "'" if args.wrapper else ""
 
     for c in IB_COMMANDS:
-        cmd = f"{c}{' ' + args.args if args.args else ''}"
-        print(f"Running `{cmd_prefix}{cmd}{cmd_postfix}`...")
+        print()
 
-        ib_server = Popen(
-            ssh_host_1 + [f"{cmd_prefix}{cmd}{cmd_postfix}".format(ip=args.server_ip)],
-            text=True,
-            stdout=DEVNULL,
-            stderr=DEVNULL,
-        )
+        stdout = ""
+        for idx, s in enumerate(SIZES):
+            cmd = f"{c} --size={s}{' ' + args.args if args.args else ''}"
+            print(f"Running `{cmd_prefix}{cmd}{cmd_postfix}`...")
 
-        sleep(args.sleep)
+            ib_server = Popen(
+                ssh_host_1 + [f"{cmd_prefix}{cmd}{cmd_postfix}".format(ip=args.server_ip)],
+                text=True,
+                stdout=DEVNULL,
+                stderr=DEVNULL,
+            )
 
-        ib_client = run(
-            ssh_host_2
-            + [
-                f"{cmd_prefix}{cmd} {args.server_ip}{cmd_postfix}".format(
-                    ip=args.client_ip
-                )
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
+            sleep(1)
 
-        ib_server.wait(timeout=15)
+            ib_client = run(
+                ssh_host_2
+                + [
+                    f"{cmd_prefix}{cmd} {args.server_ip}{cmd_postfix}".format(
+                        ip=args.client_ip
+                    )
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
 
-        print(ib_client.stdout)
+            ib_server.wait(timeout=15)
 
+            print(ib_client.stdout)
+
+            lines = ib_client.stdout.split("\n")
+
+            if idx == 0:
+                stdout = "\n".join((lines[:-1] if lines[-1].startswith("----") else lines))
+            else:
+                stdout += lines[-2] if lines[-1].startswith("----") else lines[-1]
+
+        print(stdout)
         with open(f"{data_dir}/{c}_{args.data_suffix}.txt", "w") as f:
             f.write(ib_client.stdout)
 
-        sleep(args.sleep)
+        sleep(1)
 
     return 0
 
@@ -89,7 +121,6 @@ parser.add_argument("--data-suffix", type=str, required=True)
 parser.add_argument("--prefix", type=str)
 parser.add_argument("--wrapper", type=str)
 parser.add_argument("--args", type=str)
-parser.add_argument("--sleep", type=int, default=1)
 
 
 if __name__ == "__main__":

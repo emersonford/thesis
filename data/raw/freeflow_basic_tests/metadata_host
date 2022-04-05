@@ -1,0 +1,3 @@
+host1: apt008.apt.emulab.net
+host2: apt002.apt.emulab.net
+command: ['/opt/homebrew/Cellar/python@3.10/3.10.2/Frameworks/Python.framework/Versions/3.10/Resources/Python.app/Contents/MacOS/Python', './run_basic_tests.py', '--host1', 'apt008.apt.emulab.net', '--host2', 'apt002.apt.emulab.net', '--user', 'emerso0', '--args', '-d mlx4_0 -a', '--data-dir', 'freeflow', '--data-suffix', 'host']
