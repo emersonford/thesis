@@ -28,6 +28,10 @@
     - mellanox
     - cpufreq
     - sysstat
+    - role: sriov
+      tags:
+        - never
+        - sriov
   vars:
     group_name: connectx5
 

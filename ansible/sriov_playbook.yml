@@ -1,0 +1,6 @@
+---
+- name: Configure SRIOV
+  hosts: '*'
+  roles:
+    - sriov
+

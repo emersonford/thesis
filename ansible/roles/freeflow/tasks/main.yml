@@ -21,7 +21,7 @@
     - Replace first IP in cpp
     - Replace second IP in cpp
     - Replace device idx
-  # - Enable verbose logging
+    - Enable verbose logging
     - Build base Docker image
     - Build ffrouter Docker image
     - Build ffclient Docker image
@@ -34,5 +34,4 @@
     mode: '744'
     src: 'start-containers.sh'
   vars:
-    host_ip_addr: "{{ ansible_facts[roce_if_name].ipv4.address }}/{{ ansible_facts[roce_if_name].ipv4.netmask }}"
-    freeflow_host_ip_prefix: "{{ host_ip_addr | ansible.netcommon.ipaddr('address/prefix') }}"
+    host_ip_addr: "{{ ansible_facts[roce_if_name].ipv4.address }}"

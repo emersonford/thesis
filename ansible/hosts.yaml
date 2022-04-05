@@ -6,12 +6,13 @@ all:
     connectx3:
       hosts:
         connectx3_node1:
-          ansible_host: ms0810.utah.cloudlab.us
+          ansible_host: apt008.apt.emulab.net
         connectx3_node2:
-          ansible_host: ms0833.utah.cloudlab.us
+          ansible_host: apt002.apt.emulab.net
       vars:
-        mlnx_ofed_version: '4.9-4.1.7.0'
+        mlnx_ofed_version: '4.9-0.1.7.0'
         freeflow_device_name: 'mlx4_0'
+        roce_interface_subnet: '128.110.96.0/22'
     connectx4:
       hosts:
         connectx4_node1:
@@ -23,11 +24,13 @@ all:
     connectx5:
       hosts:
         connectx5_node1:
-          ansible_host: amd202.utah.cloudlab.us
+          ansible_host: amd023.utah.cloudlab.us
         connectx5_node2:
-          ansible_host: amd189.utah.cloudlab.us
+          ansible_host: amd018.utah.cloudlab.us
       vars:
         mlnx_ofed_version: '5.5-1.0.3.2'
+        sriov_parent_device: 'mlx5_0'
+        NUM_OF_VFS: 1
     connectx5_old:
       hosts:
         connectx5_old_node1:

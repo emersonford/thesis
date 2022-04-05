@@ -1,0 +1,93 @@
+---
+- name: Check IOMMU status
+  shell: "grep '{{ iommu_str }}' /etc/default/grub"
+  register: iommu_status
+  changed_when: false
+  failed_when: false
+  vars:
+    iommu_str: "{{ 'amd_iommu=on iommu=pt' if ('AuthenticAMD' in ansible_facts['processor']) else 'intel_iommu=on' }}"
+
+- name: Enable IOMMU
+  shell: "sed -i '0,/GRUB_CMDLINE_LINUX=\".*\"/s/\\(GRUB_CMDLINE_LINUX=\".*\\)\"/\\1 {{ iommu_str }}\"/' /etc/default/grub && update-grub"
+  vars:
+    iommu_str: "{{ 'amd_iommu=on iommu=pt' if ('AuthenticAMD' in ansible_facts['processor']) else 'intel_iommu=on' }}"
+  when: "iommu_status.rc != 0"
+  notify:
+    - Reboot host
+
+- name: Force all handlers to run
+  meta: flush_handlers
+
+- name: Check MST status
+  shell: 'mst status | grep "MST PCI configuration module loaded"'
+  register: mst_status
+  failed_when: False
+  changed_when: "mst_status.rc != 0"
+
+- name: Get MLNX device from MST device
+  shell: "mst status -v | grep {{ sriov_parent_device }} | awk '{print $2}'"
+  register: mst_device
+  changed_when: false
+
+- name: Get SRIOV_EN status
+  shell: "mlxconfig -d {{ mst_device.stdout }} q | grep SRIOV_EN | awk '{print $2}'"
+  register: sriov_status
+  changed_when: false
+
+- name: Get NUM_OF_VFS status
+  shell: "mlxconfig -d {{ mst_device.stdout }} q | grep NUM_OF_VFS | awk '{print $2}'"
+  register: num_of_vfs_status
+  changed_when: false
+
+- name: Change SRIOV status
+  shell: "mlxconfig -y -d {{ mst_device.stdout }} set SRIOV_EN=1 NUM_OF_VFS={{ NUM_OF_VFS }}"
+  when: ('True' not in sriov_status.stdout or num_of_vfs_status.stdout | int != NUM_OF_VFS | int)
+  notify:
+    - Reboot host
+
+- name: Force all handlers to run
+  meta: flush_handlers
+
+- name: Get current number of enabled SRIOV devices
+  shell: 'cat /sys/class/infiniband/{{ sriov_parent_device }}/device/mlx5_num_vfs'
+  register: sriov_devices
+  changed_when: false
+
+- name: Enable SRIOV devices
+  shell: 'echo {{ NUM_OF_VFS }} > /sys/class/infiniband/{{ sriov_parent_device }}/device/mlx5_num_vfs'
+  when: 'sriov_devices.stdout | int != NUM_OF_VFS | int'
+  notify:
+    - Refresh facts
+
+- name: Force all handlers to run
+  meta: flush_handlers
+
+- name: Get SRIOV parent device interface
+  shell: "ibdev2netdev | grep '{{ sriov_parent_device }} port 1' | sed 's/{{ sriov_parent_device }} .* ==> \\(.*\\) (.*)/\\1/'"
+  register: sriov_if
+  changed_when: false
+
+- name: Add addresses to virtual function interfaces
+  shell: |
+    set -euxo pipefail
+
+    IF_NAME="{{ sriov_if.stdout }}v{{ item }}"
+    MAC_ADDR="$(cat /sys/class/net/$IF_NAME/address)"
+    PCIE_ADDR="$(ibdev2netdev -v | grep "$IF_NAME (" | awk '{print $1}')"
+
+    echo $PCIE_ADDR > /sys/bus/pci/drivers/mlx5_core/unbind
+    ip link set {{ sriov_if.stdout }} vf {{ item }} mac $MAC_ADDR
+    echo $PCIE_ADDR > /sys/bus/pci/drivers/mlx5_core/bind
+
+    ip addr add {{ ansible_facts[sriov_if.stdout]['ipv4']['address'] | ansible.netcommon.ipmath((item | int + 1) * 2) }}/24 dev $IF_NAME
+    ip link set $IF_NAME up
+  args:
+    executable: /usr/bin/bash
+  loop: "{{ vifs | trim | split('\n') | select() }}"
+  vars:
+    vifs: |
+      {% for idx in range(0, NUM_OF_VFS | int) %}
+      {% if not "ipv4" in ansible_facts[sriov_if.stdout ~ "v" ~ idx] %}
+      {{ idx }}
+      {% endif %}
+      {% endfor %}

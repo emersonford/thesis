@@ -45,6 +45,7 @@
     chdir: '~'
   notify:
     - build ofed-docker image
+  when: false
 
 - name: Create MLNX Dockerfile
   become: yes
