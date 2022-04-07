@@ -52,3 +52,9 @@ This assumes you're using [Cloudlab](https://www.cloudlab.us/) and have SSH keys
 #### Quirks to Watch Out For
 1. SRIOV virtual function instantiation is really finicky. Sometimes it behaves and sometimes it doesn't. If your `basic_tests` or `cpu_tests` don't work, reboot the host and rerun `ansible-playbook --ssh-common-args "-o StrictHostKeyChecking=no" --inventory-file="./hosts.yaml" --limit connectx5 --tags sriov site.yml`. Then rerun your tests.
     * The `multi_sriov_tests.py` script tries to handle the finickiness of SRIOV virtual functions, but after >20 times to get them to cooperate, it will fail the test.
+
+### Freeflow Tests
+
+#### Quirks to Watch Out For
+1. For whatever reason, it appears you need to perform some black magic incantation to get ffrouter working for the first time (it will continually print `Failed status 10: wr_id 0 syndrom 0x88` otherwise). I have no idea what actually fixes things, but I usually run a few `ib_read_bw` inside `node1`, run a few `ib_read_bw` outside of the container (iow on the host itself), clone my [NetCAT-Replication repo](https://github.com/emersonford/NetCAT-Replication) inside of `node1`, build it with `make all`, and run it a few times across both hosts, and eventually it sticks??
+2. Freeflow expects page-aligned memory, so you need to prefix all of your `ib_[read|write|send]_[bw|lat]` commands with `LD_PRELOAD=./align_malloc.so`. 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import shlex
 import sys
 from os import getpid, makedirs
 from subprocess import DEVNULL, Popen, run
@@ -25,8 +26,8 @@ def main(args: argparse.Namespace) -> int:
     if not args.client_ip:
         args.client_ip = args.host2
 
-    ssh_host_1 = ["ssh", f"{args.user}@{args.host1}"]
-    ssh_host_2 = ["ssh", f"{args.user}@{args.host2}"]
+    ssh_host_1 = ["ssh", "-t", f"{args.user}@{args.host1}"]
+    ssh_host_2 = ["ssh", "-t", f"{args.user}@{args.host2}"]
 
     cli_command = psutil.Process(getpid()).cmdline()
     data_dir = f"../data/raw/{args.data_dir}_basic_tests"
@@ -43,24 +44,37 @@ def main(args: argparse.Namespace) -> int:
         print(f"Running `{cmd_prefix}{cmd}{cmd_postfix}`...")
 
         ib_server = Popen(
-            ssh_host_1 + [f"{cmd_prefix}{cmd}{cmd_postfix}".format(ip=args.server_ip)],
+            " ".join(
+                ssh_host_1
+                + [
+                    shlex.quote(
+                        f"{cmd_prefix}{cmd}{cmd_postfix}".format(ip=args.server_ip)
+                    )
+                ]
+            ),
             text=True,
             stdout=DEVNULL,
             stderr=DEVNULL,
+            shell=True,
         )
 
         sleep(args.sleep)
 
         ib_client = run(
-            ssh_host_2
-            + [
-                f"{cmd_prefix}{cmd} {args.server_ip}{cmd_postfix}".format(
-                    ip=args.client_ip
-                )
-            ],
+            " ".join(
+                ssh_host_2
+                + [
+                    shlex.quote(
+                        f"{cmd_prefix}{cmd} {args.server_ip}{cmd_postfix}".format(
+                            ip=args.client_ip
+                        )
+                    )
+                ]
+            ),
             capture_output=True,
             text=True,
             check=True,
+            shell=True,
         )
 
         ib_server.wait(timeout=15)

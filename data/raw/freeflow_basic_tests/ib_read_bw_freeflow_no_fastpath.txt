@@ -1,0 +1,39 @@
+### FreeFlow ###
+context->qp_table_mask=2047
+mlx4: Warning: BlueFlame available, but failed to mmap() BlueFlame page.
+@@@ ibv_exp_cmd_query_device @@@
+[INFO] Succeed to mount shm ctrlshm-qp13
+---------------------------------------------------------------------------------------
+                    RDMA_Read BW Test
+ Dual-port       : OFF		Device         : mlx4_0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ TX depth        : 128
+ CQ Moderation   : 100
+ Mtu             : 2048[B]
+ Link type       : IB
+ Outstand reads  : 16
+ rdma_cm QPs	 : OFF
+ Data ex. method : Ethernet
+---------------------------------------------------------------------------------------
+ local address: LID 0x59 QPN 0x03e9 PSN 0xc39274 OUT 0x10 RKey 0x28010b26 VAddr 0x007f29f0c79000
+ remote address: LID 0x28 QPN 0x03ef PSN 0xc39274 OUT 0x10 RKey 0x20010b26 VAddr 0x007f56e73f3000
+---------------------------------------------------------------------------------------
+ #bytes     #iterations    BW peak[MB/sec]    BW average[MB/sec]   MsgRate[Mpps]
+ 2          1000             0.02               0.02   		   0.010588
+ 4          1000             0.04               0.04   		   0.010560
+ 8          1000             0.08               0.08   		   0.010507
+ 16         1000             0.17               0.16   		   0.010368
+ 32         1000             0.34               0.32   		   0.010628
+ 64         1000             0.65               0.64   		   0.010540
+ 128        1000             1.36               1.26   		   0.010299
+ 256        1000             2.62               2.57   		   0.010510
+ 512        1000             5.29               5.06   		   0.010358
+ 1024       1000             9.92               9.88   		   0.010121
+ 2048       1000             21.35              20.80  		   0.010652
+ 4096       1000             41.47              40.10  		   0.010264
+ 8192       1000             82.25              81.70  		   0.010457
+ 16384      1000             154.54             152.22 		   0.009742
+ 32768      1000             306.58             306.40 		   0.009805
+ 65536      1000             613.35             602.43 		   0.009639
+---------------------------------------------------------------------------------------

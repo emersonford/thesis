@@ -471,6 +471,9 @@ foobarbar
 For those that don't need virtual network control for RDMA, do not anticipate running hundreds of RDMA containers, and do not require fine grain traffic shaping of RDMA packets (or are fine relying on the network or global NIC policies for it), this would be an excellent solution.
 However, unless unique IP addresses for containers are required (e.g.\ for network level routing policies), it is likely more beneficial to directly expose RDMA devices to containers.
 
+% TODO: add a section on Freeflow's design flaws around rkey mapping
+% specifically, RDMA frequently has duplicate rkeys (see https://www.usenix.org/system/files/sec21_slides_rothenberger_0.pdf)
+% this breaks Freeflow's rkey mapping scheme in its entirety.
 \subsubsection{FreeFlow}
 FreeFlow operates in a far more paravirtualized style with the use of a user-space library and controller interposing in the RDMA control paths.
 It claims to provide close to bare-metal RDMA performance, while adding significantly more controllability to RDMA operations, thereby allow for performant use inside of containers.
