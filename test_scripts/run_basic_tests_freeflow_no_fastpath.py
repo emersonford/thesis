@@ -36,6 +36,11 @@ SIZES = [
     16384,
     32768,
     65536,
+    131072,
+    262144,
+    524288,
+    1048576,
+    2097152,
 ]
 
 # Sometimes no-fastpath gets wedged so we need to reset the client.
@@ -47,11 +52,13 @@ def reset(args: argparse.Namespace) -> None:
         ssh_host_1
         + ["docker kill router1 node1 || true; ./Freeflow/start-containers.sh"],
         check=True,
+        capture_output=True,
     )
     run(
         ssh_host_2
         + ["docker kill router1 node1 || true; ./Freeflow/start-containers.sh"],
         check=True,
+        capture_output=True,
     )
     sleep(1)
 
@@ -76,6 +83,8 @@ def main(args: argparse.Namespace) -> int:
     cmd_prefix = f"{args.wrapper} '" if args.wrapper else ""
     cmd_postfix = "'" if args.wrapper else ""
 
+    reset(args)
+
     for c in IB_COMMANDS:
         print()
 
@@ -91,7 +100,7 @@ def main(args: argparse.Namespace) -> int:
                     ssh_host_1
                     + [
                         shlex.quote(
-                            f"{cmd_prefix}{cmd}{cmd_postfix}".format(ip=args.server_ip)
+                            f"{cmd_prefix}{cmd}{cmd_postfix}".format(client_id=1)
                         )
                     ]
                 ),
@@ -110,7 +119,7 @@ def main(args: argparse.Namespace) -> int:
                         + [
                             shlex.quote(
                                 f"{cmd_prefix}{cmd} {args.server_ip}{cmd_postfix}".format(
-                                    ip=args.client_ip
+                                    client_id=2
                                 )
                             )
                         ]
@@ -141,7 +150,9 @@ def main(args: argparse.Namespace) -> int:
                     (lines[:-1] if lines[-1].startswith("----") else lines)
                 )
             else:
-                output += "\n" + lines[-2] if lines[-1].startswith("----") else lines[-1]
+                output += (
+                    "\n" + lines[-2] if lines[-1].startswith("----") else lines[-1]
+                )
 
             print(output)
             idx += 1

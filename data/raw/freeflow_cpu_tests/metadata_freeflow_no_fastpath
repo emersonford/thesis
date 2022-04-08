@@ -1,0 +1,3 @@
+host1: apt002.apt.emulab.net
+host2: apt008.apt.emulab.net
+command: ['/opt/homebrew/Cellar/python@3.10/3.10.2/Frameworks/Python.framework/Versions/3.10/Resources/Python.app/Contents/MacOS/Python', './run_cpu_tests_freeflow.py', '--host1', 'apt002.apt.emulab.net', '--host2', 'apt008.apt.emulab.net', '--user', 'emerso0', '--data-dir', 'freeflow', '--data-suffix', 'freeflow_no_fastpath', '--args', '-d mlx4_0', '--cpu-measure-time', '10', '--wrapper', 'docker run --name node1 --ulimit memlock=-1:-1 --shm-size=8g --net host -e "FFR_NAME=router1" -e "FFR_ID={client_id}" -e "LD_LIBRARY_PATH=/usr/lib" -e "LD_PRELOAD=./align_malloc.so" -e "DISABLE_FASTPATH=1" --ipc=container:router1 -v /freeflow:/freeflow --privileged --rm -it ffclient /bin/bash -c', '--max-size', '2097152']

@@ -48,7 +48,7 @@ def main(args: argparse.Namespace) -> int:
                 ssh_host_1
                 + [
                     shlex.quote(
-                        f"{cmd_prefix}{cmd}{cmd_postfix}".format(ip=args.server_ip)
+                        f"{cmd_prefix}{cmd}{cmd_postfix}".format(client_id=1)
                     )
                 ]
             ),
@@ -66,7 +66,7 @@ def main(args: argparse.Namespace) -> int:
                 + [
                     shlex.quote(
                         f"{cmd_prefix}{cmd} {args.server_ip}{cmd_postfix}".format(
-                            ip=args.client_ip
+                            client_id=2
                         )
                     )
                 ]
