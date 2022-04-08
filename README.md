@@ -54,7 +54,15 @@ This assumes you're using [Cloudlab](https://www.cloudlab.us/) and have SSH keys
     * The `multi_sriov_tests.py` script tries to handle the finickiness of SRIOV virtual functions, but after >20 times to get them to cooperate, it will fail the test.
 
 ### Freeflow Tests
+1. Provision a Cloudlab experiment with the [roce-cluster](https://www.cloudlab.us/show-profile.php?uuid=fbcf91c3-93ba-11ec-9467-e4434b2381fc) profile.
+    * Change "Node type to use" to `c6220`.
+2. Change the two hostnames of the `connectx3` group to your Cloudlab hostnames in `ansible/hosts.yaml`. Change `ansible_user` under `vars:` to your Cloudlab username.
+3. Run `ansible-playbook --ssh-common-args "-o StrictHostKeyChecking=no" --inventory-file="./hosts.yaml" --limit connectx3 site.yml` while in the `ansible` directory.
+4. Run the commands listed in `data/freeflow_*/metadata*` while in the `test_scripts` directory. Take care to replace the `--host1` and `--host2` flags to match your Cloudlab hostnames, and `--user` to match your Cloudlab username. The first argument (`/opt/homebrew/.../Python`) should be replaced with the path to your Python 3.10 binary. 
+5. The data should appear in `data/raw`. You can generate graphs based on the data you just produced by setting `MODE = "freeflow"` and rerunning all cells in the `*.ipynb` Jupyter notebooks (run `jupyter-notebook` while in the `data` dir).
 
 #### Quirks to Watch Out For
-1. For whatever reason, it appears you need to perform some black magic incantation to get ffrouter working for the first time (it will continually print `Failed status 10: wr_id 0 syndrom 0x88` otherwise). I have no idea what actually fixes things, but I usually run a few `ib_read_bw` inside `node1`, run a few `ib_read_bw` outside of the container (iow on the host itself), clone my [NetCAT-Replication repo](https://github.com/emersonford/NetCAT-Replication) inside of `node1`, build it with `make all`, and run it a few times across both hosts, and eventually it sticks??
+1. RDMA's rkey generation is deterministic (see the [ReDMArk paper](https://www.usenix.org/system/files/sec21-rothenberger.pdf)), particularly on mlx4 NICs. Freeflow assumes unique rkeys per host as part of its rkey mapping scheme, which breaks with this deterministic generation. I added a patch to my fork of Freeflow to circumvent this, but if you run into `Failed status 10: wr_id 0 syndrom 0x88` errors, this is likely why. 
 2. Freeflow expects page-aligned memory, so you need to prefix all of your `ib_[read|write|send]_[bw|lat]` commands with `LD_PRELOAD=./align_malloc.so`. 
+3. Freeflow only supports mlx4 driver NICs, so you must use ConnectX-3 NICs.
+4. Freeflow provides a "no-fastpath" mode. However, this mode is prone to deadlocks at specific RDMA packet sizes and with more than 2 clients.
