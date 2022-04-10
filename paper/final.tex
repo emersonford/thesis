@@ -416,8 +416,8 @@ This solution is also typically called macvlan mode.
 \end{description}
 
 \subsubsection*{Performance Tests}
-All of the following tests were performed on Cloudlab with two c6525-100g hosts, which have a 24 core AMD 7402P at 2.80GHz CPU, 128GB RAM, and a dual port ConnectX--5 Ex 100 Gbit NIC~\cite{cloudlab}. 
-Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using the Mellanox OFED RDMA stack.
+All of the following tests were performed on Cloudlab with two d6515 hosts, which have a 32 core AMD 7452 at 2.35GHz CPU, 128GB RAM, and a dual port ConnectX--5 100 Gbit NIC~\cite{cloudlab}. 
+Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using the Mellanox OFED RDMA stack version 5.5-1.0.3.2.
 
 \begin{figure}
 	\centering
@@ -446,7 +446,8 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 	\label{fig:shared_hca_cpu}
 \end{figure}
 
-foobarbar
+Figures~\ref{fig:shared_hca_latency},~\ref{fig:shared_hca_bandwidth}, and~\ref{fig:shared_hca_cpu} were all performed with either a single shared HCA device (labeled \texttt{shared}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
+All three of these graphs indicate there is no perceivable difference between using the single raw RDMA device vs using a shared HCA device.
 
 \begin{figure}
 	\centering
@@ -457,6 +458,10 @@ foobarbar
 	\label{fig:shared_hca_multi_vdev}
 \end{figure}
 
+Figure~\ref{fig:shared_hca_multi_vdev} was performed with multiple shared HCA devices created on both the client and server, with a single \texttt{ib\_(read|write|send)\_bw} test running on each device with a byte size of 65536.
+Each of these devices were ``provisioned'' by Docker and the tests ran inside of the corresponding Docker container.
+Similarly to the individual device tests, the multi-shared HCA device tests show that shared HCA can fully saturate the bandwidth of the host RDMA device with no additional CPU utilization (the CPU utilization is expected with the \texttt{ib\_(read|write|send)\_bw} clients processes using 100\% CPU).
+As expected, the use of shared HCA devices requires no performance or resource penalties.
 
 \subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
@@ -563,8 +568,7 @@ Further, with SR-IOV being a hardware feature, some RDMA-capable NICs allow for 
 Recall that SR-IOV cannot scale past a certain number of virtual functions due to hardware resource limitations.
 Further, because these are still hardware devices, virtual functions cannot integrate with kernel network isolation systems.
 
-\noindent
-\textbf{Container Network Properties}
+\subsubsection*{Container Network Properties}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
 	% todo: fix this part, how does the IP address depend on the NIC?
 	\item[Network Isolation] each NIC is given its own RDMA device, which can have its own IP address and VLAN tags; however the IP address must be exposed to the host network
@@ -572,11 +576,57 @@ Further, because these are still hardware devices, virtual functions cannot inte
 	\item[Resource Utilization] consumes SR-IOV slots in the NIC and can exhaust the GID table of the NIC, however does not require any other resources
 \end{description}
 
-% todo
-[[ADD RDMA PERFORMANCE GRAPHS HERE]]
+\subsubsection*{Performance Tests}
+All of the following tests were performed on Cloudlab with two d6515 hosts, which have a 32 core AMD 7452 at 2.35GHz CPU, 128GB RAM, and a dual port ConnectX--5 100 Gbit NIC~\cite{cloudlab}. 
+Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using the Mellanox OFED RDMA stack version 5.5-1.0.3.2.
 
-\noindent
-\textbf{Miscellaneous Comments}
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{sriov_basic_lat.png}
+	}
+	\caption{Latency Tests}%
+	\label{fig:sriov_latency}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{sriov_basic_bw.png}
+	}
+	\caption{Bandwidth Tests}%
+	\label{fig:sriov_bandwidth}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{sriov_cpu.png}
+	}
+	\caption{CPU Utilization}%
+	\label{fig:sriov_cpu}
+\end{figure}
+
+Figures~\ref{fig:sriov_latency},~\ref{fig:sriov_bandwidth}, and~\ref{fig:sriov_cpu} were all performed with either a single SR-IOV device (labeled \texttt{sriov}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
+The use of SR-IOV does appear to have a small, but significant network performance impact;
+latency appears to be slightly worse for small message sizes and becomes up to 1 microsecond worse with larger payloads.
+For bandwidth, SR-IOV appears to be capped at about 500 to 1000 MB/sec less than if using the raw host RDMA device.
+As expected, CPU performance is not worse when using an SR-IOV device as all of the device multiplexing is done on the NIC itself. 
+
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{sriov_multi_dev.png}
+	}
+	\caption{CPU Utilization}%
+	\label{fig:sriov_multi_vdev}
+\end{figure}
+
+Figure~\ref{fig:sriov_multi_vdev} was performed with multiple SR-IOV devices created on both the client and server, with a single \texttt{ib\_(read|write|send)\_bw} test running on each device with a byte size of 65536.
+SR-IOV appears to not suffer in bandwidth with the use of additional SR-IOV devices, indicating its performance scales nicely.
+However, similar to the single device tests, it seems that even the use of multiple SR-IOV devices has a bandwidth cap less than what is achievable with the raw host RDMA device.
+
+\subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
 	\item[Scalability Limits] limited by both the number of possible SR-IOV virtual functions on the NIC, as well as the number of GID table entries available (ex.\ for RoCEv2, SR-IOV VFs need at least 2 entries)
 	\item[Proprietary] requires the NIC hardware to support it, some controllability features like flow control are dependent on the NIC features as well
@@ -708,7 +758,7 @@ This is likely due to one CPU core being entirely used for SoftRoCE processing a
 	\label{fig:softroce_multi_vdev}
 \end{figure}
 
-Figure~\ref{fig:softroce_multi_vdev} was performed with multiple SoftRoCE devices created on both the client and server, with a single \texttt{ib\_read\_bw} test running on each device with a byte size of 65536.
+Figure~\ref{fig:softroce_multi_vdev} was performed with multiple SoftRoCE devices created on both the client and server, with a single \texttt{ib\_(read|write|send)\_bw} test running on each device with a byte size of 65536.
 For each SoftRoCE device, a \texttt{macvlan} interface was created on the RDMA device's interface to serve as the SoftRoCE device's parent, which is necessary as an interface can only parent one SoftRoCE device.
 As an example, with $\texttt{pairs} = 3$, both the client and server had 3 macvlan interfaces and 3 SoftRoCE devices provisioned. 
 SoftRoCE device 1 on the client connected to the \texttt{ib\_read\_bw} server running on SoftRoCE device 1 on the server.
@@ -748,6 +798,12 @@ Given this, the use of RDMA in containers would inherit this security vulnerabil
 For the security of the management plane for RDMA in container solutions, almost every solution inherits the security provided by the core RDMA protocol.
 Some solutions, such as FreeFlow, would have to implement their own security model for the management of their virtual RDMA devices as only FreeFlow is aware of these devices.
 For other solutions where the kernel is aware of the virtual devices, these solutions would piggyback on existing RDMA management plane security and their use would not open any potential security concerns.
+
+Beyond the security vulnerabilities introduced by RDMA itself, use of these RDMA-in-container solutions do open a security hole if they do not provide true inter-host / network isolation.
+Nearly all RDMA devices have been shown to have deterministic, or at the very least highly guessable, memory key generation algorithms~\cite{redmark}.
+Thus, even if network operators limited the snooping ability of RDMA devices inside of containers, its possible for individual containers to guess the memory keys of remote hosts.
+This would render multi-tenant environments with RDMA-in-container solutions extremely insecure.
+Environments looking to use an RDMA-in-container solution in a multi-tenant environment are recommended to create full, network level isolation between each RDMA-in-container device to mitigate these issues.
 
 \subsection{Network Reconfiguration}
 One other potential solution for enabling RDMA-in-containers would be to use network reconfiguration, where the container network policies are enforced by the underlying network instead of by the host or NIC\@.

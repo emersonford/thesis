@@ -32,18 +32,12 @@
       tags:
         - never
         - sriov
+    - role: asap2_direct
+      tags:
+        - never
+        - asap2_direct
   vars:
     group_name: connectx5
-
-- name: configure ConnectX-5 nodes
-  hosts: connectx5_old
-  roles:
-    - docker
-    - mellanox
-    - cpufreq
-    - sysstat
-  vars:
-    group_name: connectx5_old
 
 - name: configure non-Mellanox nodes
   hosts: no_mlnx_ofed

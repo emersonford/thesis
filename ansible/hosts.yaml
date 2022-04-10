@@ -24,21 +24,14 @@ all:
     connectx5:
       hosts:
         connectx5_node1:
-          ansible_host: amd023.utah.cloudlab.us
+          ansible_host: amd270.utah.cloudlab.us
         connectx5_node2:
-          ansible_host: amd018.utah.cloudlab.us
+          ansible_host: amd251.utah.cloudlab.us
       vars:
         mlnx_ofed_version: '5.5-1.0.3.2'
-        sriov_parent_device: 'mlx5_0'
+        sriov_parent_device: 'mlx5_2'
         NUM_OF_VFS: 1
-    connectx5_old:
-      hosts:
-        connectx5_old_node1:
-          ansible_host: amd009.utah.cloudlab.us
-        connectx5_old_node2:
-          ansible_host: amd008.utah.cloudlab.us
-      vars:
-        mlnx_ofed_version: '4.9-4.1.7.0'
+        additional_mlnx_install_flags: "--ovs-dpdk"
     no_mlnx_ofed:
       hosts:
         no_mlnx_ofed_node1:

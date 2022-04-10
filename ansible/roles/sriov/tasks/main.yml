@@ -23,6 +23,11 @@
   register: mst_status
   failed_when: False
   changed_when: "mst_status.rc != 0"
+  notify:
+    - Start MST
+
+- name: Force all handlers to run
+  meta: flush_handlers
 
 - name: Get MLNX device from MST device
   shell: "mst status -v | grep {{ sriov_parent_device }} | awk '{print $2}'"
@@ -67,27 +72,40 @@
   register: sriov_if
   changed_when: false
 
+- name: Get list of VF interface names
+  shell: |
+    set -euxo pipefail
+    IB_DEV_OUTPUT="$(ibdev2netdev -v)"
+
+    for i in $(seq 0 {{ (NUM_OF_VFS | int - 1) }}); do 
+      PCIE_ADDR="$(grep PCI_SLOT_NAME /sys/class/net/{{ sriov_if.stdout }}/device/virtfn$i/uevent | sed 's:.*PCI_SLOT_NAME=::')"
+      
+      IF_NAME="$(echo "$IB_DEV_OUTPUT" | grep -E "^$PCIE_ADDR " | sed 's/.* ==> \(.*\) (.*)/\1/')"
+
+      echo "$i $IF_NAME $PCIE_ADDR"
+    done
+  args:
+    executable: /usr/bin/bash
+  register: vf_if_names
+  changed_when: false
+
 - name: Add addresses to virtual function interfaces
   shell: |
     set -euxo pipefail
 
-    IF_NAME="{{ sriov_if.stdout }}v{{ item }}"
+    IF_NAME="{{ item.split()[1] }}"
+    IDX="{{ item.split()[0] }}"
+    PCIE_ADDR="{{ item.split()[2] }}"
+
     MAC_ADDR="$(cat /sys/class/net/$IF_NAME/address)"
-    PCIE_ADDR="$(ibdev2netdev -v | grep "$IF_NAME (" | awk '{print $1}')"
 
     echo $PCIE_ADDR > /sys/bus/pci/drivers/mlx5_core/unbind
-    ip link set {{ sriov_if.stdout }} vf {{ item }} mac $MAC_ADDR
+    ip link set {{ sriov_if.stdout }} vf $IDX mac $MAC_ADDR
     echo $PCIE_ADDR > /sys/bus/pci/drivers/mlx5_core/bind
 
-    ip addr add {{ ansible_facts[sriov_if.stdout]['ipv4']['address'] | ansible.netcommon.ipmath((item | int + 1) * 2) }}/24 dev $IF_NAME
+    ip addr add {{ ansible_facts[sriov_if.stdout]['ipv4']['address'] | ansible.netcommon.ipmath((item.split()[0] | int + 1) * 2) }}/24 dev $IF_NAME
     ip link set $IF_NAME up
   args:
     executable: /usr/bin/bash
-  loop: "{{ vifs | trim | split('\n') | select() }}"
-  vars:
-    vifs: |
-      {% for idx in range(0, NUM_OF_VFS | int) %}
-      {% if not "ipv4" in ansible_facts[sriov_if.stdout ~ "v" ~ idx] %}
-      {{ idx }}
-      {% endif %}
-      {% endfor %}
+  when: "'ipv4' not in ansible_facts[item.split()[1]]"
+  loop: "{{ vf_if_names.stdout | trim | split('\n') | select() }}"

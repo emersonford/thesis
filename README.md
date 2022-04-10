@@ -63,6 +63,20 @@ This assumes you're using [Cloudlab](https://www.cloudlab.us/) and have SSH keys
 
 #### Quirks to Watch Out For
 1. RDMA's rkey generation is deterministic (see the [ReDMArk paper](https://www.usenix.org/system/files/sec21-rothenberger.pdf)), particularly on mlx4 NICs. Freeflow assumes unique rkeys per host as part of its rkey mapping scheme, which breaks with this deterministic generation. I added a patch to my fork of Freeflow to circumvent this, but if you run into `Failed status 10: wr_id 0 syndrom 0x88` errors, this is likely why. 
-2. Freeflow expects page-aligned memory, so you need to prefix all of your `ib_[read|write|send]_[bw|lat]` commands with `LD_PRELOAD=./align_malloc.so`. 
+2. Freeflow expects page-aligned memory, hence the use of `LD_PRELOAD=./align_malloc.so`. 
 3. Freeflow only supports mlx4 driver NICs, so you must use ConnectX-3 NICs.
 4. Freeflow provides a "no-fastpath" mode. However, this mode is prone to deadlocks at specific RDMA packet sizes and with more than 2 clients.
+
+### Mellanox ASAP2 Direct Tests
+1. Provision a Cloudlab experiment with the [roce-cluster](https://www.cloudlab.us/show-profile.php?uuid=fbcf91c3-93ba-11ec-9467-e4434b2381fc) profile.
+    * Change "Node type to use" to `c6525-100g`.
+2. Change the two hostnames of the `connectx5` group to your Cloudlab hostnames in `ansible/hosts.yaml`. Change `ansible_user` under `vars:` to your Cloudlab username.
+3. Run `ansible-playbook --ssh-common-args "-o StrictHostKeyChecking=no" --inventory-file="./hosts.yaml" --limit connectx5 --tags sriov,asap2_direct site.yml` while in the `ansible` directory. Reboot both hosts through the Cloudlab UI after installing MLNX OFED. Then rerun the `ansible-playbook` command to completion.
+4. Run the commands listed in `data/asap2_direct_basic_tests/metadata_host` and `data/asap2_direct_cpu_tests/metadata_host` while in the `test_scripts` directory. Take care to replace the `--host1` and `--host2` flags to match your Cloudlab hostnames, and `--user` to match your Cloudlab username. The first argument (`/opt/homebrew/.../Python`) should be replaced with the path to your Python 3.10 binary. 
+5. Run `ansible-playbook --ssh-common-args "-o StrictHostKeyChecking=no" --inventory-file="./hosts.yaml" --limit connectx5 --tags sriov,asap2_direct site.yml` while in the `ansible` directory. This will provision the first SRIOV virtual function on both hosts and configure ASAP2 Direct.
+6. Run the commands listed in `data/asap2_direct_basic_tests/metadata_sriov` and `data/asap2_direct_cpu_tests/metadata_sriov` while in the `test_scripts` directory. Take care to replace the `--host1` and `--host2` flags to match your Cloudlab hostnames, and `--user` to match your Cloudlab username. The first argument (`/opt/homebrew/.../Python`) should be replaced with the path to your Python 3.10 binary. 
+7. Run the commands listed in `data/sriov_multi_dev/metadata` while in the `test_scripts` directory. Take care to replace the `--host1` and `--host2` flags to match your Cloudlab hostnames, and `--user` to match your Cloudlab username. The first argument (`/opt/homebrew/.../Python`) should be replaced with the path to your Python 3.10 binary. 
+8. The data should appear in `data/raw`. You can generate graphs based on the data you just produced by setting `MODE = "asap2_direct"` and rerunning all cells in the `*.ipynb` Jupyter notebooks (run `jupyter-notebook` while in the `data` dir).
+
+#### Quirks to Watch Out For
+1. When using `switchdev`, there's both an interface for the SRIOV NIC itself and a "representor netdevice" (see [these slides](https://legacy.netdevconf.info/1.2/session.html?or-gerlitz)). Sometimes the names get messed up on these and you have to reboot the host or mess around with udev rules. 

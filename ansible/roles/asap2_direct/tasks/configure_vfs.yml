@@ -1,0 +1,31 @@
+---
+- name: Unbind all SRIOV VFs
+  shell: |
+    set -euxo pipefail
+
+    for i in $(grep PCI_SLOT_NAME /sys/class/net/{{ parent_if }}/device/virtfn*/uevent | cut -d'=' -f2); do
+      echo "Unbinding $i..."
+      echo $i > /sys/bus/pci/drivers/mlx5_core/unbind
+    done
+  args:
+    executable: /usr/bin/bash
+
+- name: Set SRIOV parent interface to switchdev
+  shell: |
+    echo switchdev > /sys/class/net/{{ parent_if }}/compat/devlink/mode
+    # PCI_ADDR=$(grep PCI_SLOT_NAME /sys/class/net/{{ parent_if }}/device/uevent | sed 's:.*PCI_SLOT_NAME=::')
+    # devlink dev eswitch set pci/$PCI_ADDR mode switchdev
+    # ethtool -K {{ parent_if }} hw-tc-offload on
+
+# - name: Rebind all SRIOV VFs
+#   shell: |
+#     set -euxo pipefail
+
+#     for i in $(grep PCI_SLOT_NAME /sys/class/net/{{ parent_if }}/device/virtfn*/uevent | cut -d'=' -f2); do
+#       echo $i > /sys/bus/pci/drivers/mlx5_core/bind
+#     done
+#   args:
+#     executable: /usr/bin/bash
+
+- name: Refresh facts
+  setup:

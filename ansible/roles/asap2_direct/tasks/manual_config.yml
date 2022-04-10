@@ -1,0 +1,45 @@
+---
+- name: Check SRIOV parent interface switch mode
+  shell: "cat /sys/class/net/{{ sriov_if.stdout }}/compat/devlink/mode"
+  register: switch_mode
+  changed_when: false
+  failed_when: false
+
+- name: Set PF to switchdev
+  include_tasks:
+    file: configure.yml
+  when: "switch_mode.stdout != 'switchdev' and switch_mode.rc == 0"
+  vars:
+    parent_if: "{{ sriov_if.stdout }}"
+
+- name: Check if SRIOV parent if added to OVS switch 
+  shell: "ovs-vsctl list-ports ovs-sriov | grep -E '^{{ sriov_if.stdout }}$'"
+  register: ovs_switch_parent_if_check
+  changed_when: false
+  failed_when: false
+
+- name: Add SRIOV parent if to OpenVSwitch
+  shell: |
+    ovs-vsctl add-port ovs-sriov {{ sriov_if.stdout }}
+    # ip link set dev {{ sriov_if.stdout }} up
+  when: "ovs_switch_parent_if_check.rc != 0"
+
+- name: Configure VF interfaces
+  shell: |
+    set -euxo pipefail
+
+    IF_NAME="{{ sriov_if.stdout }}v{{ item }}"
+
+    ovs-vsctl add-port ovs-sriov $IF_NAME
+    ip link set $IF_NAME up
+    # ip addr add {{ ansible_facts[sriov_if.stdout]['ipv4']['address'] | ansible.netcommon.ipmath((item | int + 1) * 2) }}/24 dev $IF_NAME
+  args:
+    executable: /usr/bin/bash
+  loop: "{{ vifs | trim | split('\n') | select() }}"
+  vars:
+    vifs: |
+      {% for idx in range(0, NUM_OF_VFS | int) %}
+      {% if not "ipv4" in ansible_facts[sriov_if.stdout ~ "v" ~ idx] %}
+      {{ idx }}
+      {% endif %}
+      {% endfor %}

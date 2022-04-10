@@ -1,0 +1,16 @@
+---
+- name: Add OVS bridge
+  shell: "ovs-vsctl add-br ovs-sriov"
+  
+- name: Enable hardware offload
+  shell: |
+    ovs-vsctl set Open_vSwitch . other_config:hw-offload=true
+    ovs-vsctl set Open_vSwitch . other_config:max-idle=30000
+  notify:
+    - Restart OpenVSwitch
+
+- name: Restart OpenVSwitch
+  service: 
+    name: openvswitch-switch
+    state: restarted
+

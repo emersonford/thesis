@@ -1,6 +1,6 @@
 ---
 - name: Run mlnxofedinstall
-  shell: './mlnxofedinstall --without-fw-update --without-neohost-backend --force && /etc/init.d/openibd restart'
+  shell: './mlnxofedinstall --without-fw-update --without-neohost-backend --force {{ additional_mlnx_install_flags }} && /etc/init.d/openibd restart'
   args:
     chdir: '~/{{ mellanox_ib_driver_name }}'
   async: 1800
