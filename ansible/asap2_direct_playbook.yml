@@ -1,0 +1,10 @@
+---
+- name: Configure SRIOV and ASAP2 Direct
+  hosts: 'connectx5'
+  roles:
+    - sriov
+    - asap2_direct
+  vars:
+    group_name: connectx5
+
+

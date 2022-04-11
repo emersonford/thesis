@@ -32,6 +32,7 @@ all:
         sriov_parent_device: 'mlx5_2'
         NUM_OF_VFS: 1
         additional_mlnx_install_flags: "--ovs-dpdk"
+        configure_sriov_ifs: true
     no_mlnx_ofed:
       hosts:
         no_mlnx_ofed_node1:

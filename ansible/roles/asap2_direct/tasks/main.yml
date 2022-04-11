@@ -1,4 +1,21 @@
 ---
+- name: Cleanup OVS bridge
+  shell: ovs-vsctl del-br ovs-sriov
+  failed_when: false
+  when: "cleanup_old_state | bool == true"
+
+- name: Cleanup Docker state
+  shell: |
+    docker network rm mynet
+    docker kill $(docker ps -q)
+    systemctl restart docker
+    rm -rf docker-sriov-plugin || true
+  args:
+    executable: /usr/bin/bash
+    chdir: '~'
+  failed_when: false
+  when: "cleanup_old_state | bool == true"
+
 - name: Install dependencies
   apt:
     name: "openvswitch-switch"
@@ -12,10 +29,17 @@
 
 - name: Initialize Docker SRIOV OVS containers
   shell: |
-    docker pull rdma/sriov-plugin
+    git clone https://github.com/emersonford/docker-sriov-plugin
+    pushd docker-sriov-plugin
+    docker build . -f Dockerfile -t sriov-plugin
+    popd
+
     docker pull rdma/container_tools_installer
     docker run --net=host -v /usr/bin:/tmp rdma/container_tools_installer
-    docker run -v /run/docker/plugins:/run/docker/plugins -v /etc/docker:/etc/docker -v /var/run:/var/run --net=host --privileged --rm -d rdma/sriov-plugin
+    docker run -v /run/docker/plugins:/run/docker/plugins -v /etc/docker:/etc/docker -v /var/run:/var/run --net=host --privileged --rm -d sriov-plugin
+  args:
+    executable: /usr/bin/bash
+    chdir: '~'
   when: "docker_sriov_check.rc != 0"
 
 - name: Start OpenVSwitch
@@ -44,14 +68,14 @@
   meta: flush_handlers
 
 - name: Get SRIOV parent device interface
-  shell: "ibdev2netdev | grep '{{ sriov_parent_device }} port 1' | sed 's/{{ sriov_parent_device }} .* ==> \\(.*\\) (.*)/\\1/'"
+  shell: "ibdev2netdev | grep '{{ sriov_parent_device }} port 1 ==>' | sed 's/.* ==> \\(.*\\) (.*)/\\1/'"
   register: sriov_if
   changed_when: false
 
-- name: Get SRIOV parent interface switch ID
-  shell: "ip -d link show {{ sriov_if.stdout }} | grep 'switchid' | sed 's/.*switchid \\([a-f0-9]\\+\\)/\\1/'"
-  register: switchid_cmd
-  changed_when: false
+# - name: Get SRIOV parent interface switch ID
+#   shell: "ip -d link show {{ sriov_if.stdout }} | grep 'switchid' | sed 's/.*switchid \\([a-f0-9]\\+\\)/\\1/'"
+#   register: switchid_cmd
+#   changed_when: false
 
 # - name: Create net setup link rules
 #   template:
@@ -94,7 +118,13 @@
     docker_rdma_sriov sriov bind -n {{ sriov_if.stdout }}
   args:
     executable: /usr/bin/bash
-  when: "switch_mode.stdout != 'switchdev' and switch_mode.rc == 0"
+  when: "switch_mode.stdout != 'switchdev' or switch_mode.rc != 0"
+
+- name: Unbind/rebind SRIOV VFs
+  shell: |
+    docker_rdma_sriov sriov unbind -n {{ sriov_if.stdout }}
+    docker_rdma_sriov sriov bind -n {{ sriov_if.stdout }}
+  when: "cleanup_old_state | bool == true"
 
 - name: Refresh facts
   setup:
@@ -105,7 +135,7 @@
     IB_DEV_OUTPUT="$(ibdev2netdev -v)"
 
     for i in $(seq 0 {{ (NUM_OF_VFS | int - 1) }}); do 
-      PCIE_ADDR="$(grep PCI_SLOT_NAME /sys/class/net/{{ sriov_if.stdout }}/device/virtfn$i/uevent | sed 's:.*PCI_SLOT_NAME=::')"
+      PCIE_ADDR="$(grep PCI_SLOT_NAME "/sys/class/net/{{ sriov_if.stdout }}/device/virtfn$i/uevent" | sed 's:.*PCI_SLOT_NAME=::')"
       
       IF_NAME="$(echo "$IB_DEV_OUTPUT" | grep -E "^$PCIE_ADDR " | sed 's/.* ==> \(.*\) (.*)/\1/')"
 
@@ -116,6 +146,11 @@
   register: vf_if_names
   changed_when: false
 
+- name: Cleanup IP addrs
+  shell: "ip addr flush dev {{ item.split()[1] }}"
+  loop: "{{ vf_if_names.stdout | trim | split('\n') | select() }}"
+  when: "cleanup_old_state | bool == true"
+
 - name: Configure VFs
   shell: |
     set -euxo pipefail
@@ -125,8 +160,29 @@
     MATCHING_VF_MAC_ADDR="{{ hostvars[groups[group_name][((hostvars[groups[group_name][0]]["ansible_hostname"] == ansible_hostname) | ternary(1, 0))]]["ansible_" + item.split()[1]]["macaddress"] }}"
     REPR_NAME="{{ sriov_if.stdout }}_{{ item.split()[0] }}"
 
-    if ! ovs-vsctl list-ports ovs-sriov | grep $REPR_NAME; then
+    if ! ip link show dev $REPR_NAME; then
+      REPR_NAME="{{ sriov_if.stdout }}_pf0vf{{ item.split()[0] }}"
+    fi
+
+    if ! ip link show dev $REPR_NAME; then
+      REPR_NAME="{{ sriov_if.stdout.split('_')[0] }}_{{ item.split()[0] }}"
+    fi
+
+    if ! ip link show dev $REPR_NAME; then
+      REPR_NAME="{{ sriov_if.stdout.split('_')[0] }}_pf0vf{{ item.split()[0] }}"
+    fi
+
+    if ! ip link show dev $REPR_NAME; then
+      REPR_NAME="eth{{ item.split()[0] }}"
+    fi
+
+    if ! ip link show dev $REPR_NAME; then
+      exit 1
+    fi
+
+    if ! ovs-vsctl list-ports ovs-sriov | grep -E "^$REPR_NAME\$"; then
       ovs-vsctl add-port ovs-sriov $REPR_NAME
+      ip link set dev $VF_NAME up
       tc qdisc add dev $REPR_NAME ingress || tc qdisc replace dev $REPR_NAME ingress
       tc filter add dev {{ sriov_if.stdout }} protocol ip parent ffff: flower ip_proto udp dst_port 4791 skip_sw dst_mac $VF_MAC_ADDR action mirred egress redirect dev $REPR_NAME
       tc filter add dev $REPR_NAME protocol ip parent ffff: flower skip_sw ip_proto udp dst_mac $MATCHING_VF_MAC_ADDR dst_port 4791 action mirred egress redirect dev {{ sriov_if.stdout }}
@@ -137,7 +193,7 @@
     executable: /usr/bin/bash
   loop: "{{ vf_if_names.stdout | trim | split('\n') | select() }}"
   register: configure_vf_res
-  changed_when: configure_vf_res.stdout == "changed"
+  changed_when: "'changed' in configure_vf_res.stdout_lines[-1]"
 
 - name: Check Docker SRIOV network 
   shell: "docker network ls | grep 'mynet' | grep 'sriov'"
