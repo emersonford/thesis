@@ -534,14 +534,14 @@ This clever interposition in the least performance critical parts of RDMA allow 
 \subsubsection*{Performance Tests}
 All of the following tests were performed on Cloudlab with two c6220 hosts, which have a 2, 8 core Intel Xeon E5-2650v2 at 2.6GHz CPUs, 64GB RAM, and a single port ConnectX--2 FDR (40 Gbit) Infiniband NIC~\cite{cloudlab}. 
 Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using the Mellanox OFED RDMA stack version 4.9-4.1.7.0.
-The Freeflow stack used is a fork (developed for this thesis) of the official Microsoft Freeflow repository, having been updating from the MLNX OFED 4.0 stack to the 4.9 stack.
-This fork also includes a handful of patches to fix Freeflow's rkey mappings and the build process.
+The FreeFlow stack used is a fork (developed for this thesis) of the official Microsoft FreeFlow repository, having been updating from the MLNX OFED 4.0 stack to the 4.9 stack.
+This fork also includes a handful of patches to fix FreeFlow's rkey mappings and the build process.
 
-Freeflow provides two modes.
+FreeFlow provides two modes.
 The first, fastpath, polls for completed work requests on the client side to provide improved latency results at the cost of a fully pinned CPU core.
-The second, no fastpath, waits for messages from the unix socket shared with the Freeflow router, which reduces CPU utilization but increases latency.
+The second, no fastpath, waits for messages from the unix socket shared with the FreeFlow router, which reduces CPU utilization but increases latency.
 Both are tested and their results are reported here. 
-Unfortunately, it appears no fastpath suffers from deadlocks with specific RDMA message sizes and with multiple Freeflow clients, thus its results are more limited than the fastpath version.
+Unfortunately, it appears no fastpath suffers from deadlocks with specific RDMA message sizes and with multiple FreeFlow clients, thus its results are more limited than the fastpath version.
 
 \begin{figure}
 	\centering
@@ -570,14 +570,14 @@ Unfortunately, it appears no fastpath suffers from deadlocks with specific RDMA 
 	\label{fig:freeflow_cpu}
 \end{figure}
 
-Figures~\ref{fig:freeflow_latency},~\ref{fig:freeflow_bandwidth}, and~\ref{fig:freeflow_cpu} were all performed with either a single Freeflow device (labeled \texttt{freeflow}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
-Figure~\ref{fig:freeflow_latency} indicates that, even with the client and Freeflow router spinning on the completion queue, there is still a significant latency overhead to using Freeflow.
-Figure~\ref{fig:freeflow_bandwidth} shows that Freeflow is capable of fully saturating the NIC's bandwidth, albeit requiring almost 4 times the RDMA message sizes than when using the raw host RDMA device.
-This appears to be from Freeflow's inability to handle large message rates, which lags considerable behind the message rate achievable when using the raw host RDMA device.
-As this is primarily a CPU bound limitation, Freeflow may see significantly better bandwidth performance on higher clock rate CPUs.
-Figure~\ref{fig:freeflow_cpu} shows Freeflow using double the CPU on both the server and client when compared to using the raw host RDMA device.
-This is likely due to the use of fastpath, which pins the Freeflow router at 100\% CPU utilization on both the client and server. 
-Aside from this, Freeflow doesn't appear to require any additional CPU utilization.
+Figures~\ref{fig:freeflow_latency},~\ref{fig:freeflow_bandwidth}, and~\ref{fig:freeflow_cpu} were all performed with either a single FreeFlow device (labeled \texttt{freeflow}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
+Figure~\ref{fig:freeflow_latency} indicates that, even with the client and FreeFlow router spinning on the completion queue, there is still a significant latency overhead to using FreeFlow.
+Figure~\ref{fig:freeflow_bandwidth} shows that FreeFlow is capable of fully saturating the NIC's bandwidth, albeit requiring almost 4 times the RDMA message sizes than when using the raw host RDMA device.
+This appears to be from FreeFlow's inability to handle large message rates, which lags considerable behind the message rate achievable when using the raw host RDMA device.
+As this is primarily a CPU bound limitation, FreeFlow may see significantly better bandwidth performance on higher clock rate CPUs.
+Figure~\ref{fig:freeflow_cpu} shows FreeFlow using double the CPU on both the server and client when compared to using the raw host RDMA device.
+This is likely due to the use of fastpath, which pins the FreeFlow router at 100\% CPU utilization on both the client and server. 
+Aside from this, FreeFlow doesn't appear to require any additional CPU utilization.
 
 \begin{figure}
 	\centering
@@ -606,22 +606,30 @@ Aside from this, Freeflow doesn't appear to require any additional CPU utilizati
 	\label{fig:freeflow_no_fastpath_cpu}
 \end{figure}
 
-Figures~\ref{fig:freeflow_no_fastpath_latency},~\ref{fig:freeflow_no_fastpath_bandwidth}, and~\ref{fig:freeflow_no_fastpath_cpu} were all performed with either a single Freeflow device in non-fastpath mode (labeled \texttt{freeflow}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
-Figure~\ref{fig:freeflow_no_fastpath_latency} shows a extreme increase in the latency overhead when compared to using Freeflow with fastpath.
+Figures~\ref{fig:freeflow_no_fastpath_latency},~\ref{fig:freeflow_no_fastpath_bandwidth}, and~\ref{fig:freeflow_no_fastpath_cpu} were all performed with either a single FreeFlow device in non-fastpath mode (labeled \texttt{freeflow}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
+Figure~\ref{fig:freeflow_no_fastpath_latency} shows a extreme increase in the latency overhead when compared to using FreeFlow with fastpath.
 This confirms, as mentioned in the paper, that non-fastpath mode is unacceptable for any latency sensitive purposes.
 Figure~\ref{fig:freeflow_no_fastpath_bandwidth} indicates that non-fastpath mode also suffers substantially in bandwidth; 
-it is no longer capable of fully saturing the NIC's bandwidth like Freeflow with fastpath was able to.
-This is likely due to the even worse message rate handling with the non-fastpath mode, as the message rate is bottle necked by the notifications sent from the Freeflow router to the Freeflow client through the unix socket.
-Data past 2097152 bytes is not reported for Freeflow without fastpath as the Freeflow router appears to locks up after this message size.
+it is no longer capable of fully saturing the NIC's bandwidth like FreeFlow with fastpath was able to.
+This is likely due to the even worse message rate handling with the non-fastpath mode, as the message rate is bottle necked by the notifications sent from the FreeFlow router to the FreeFlow client through the unix socket.
+Data past 2097152 bytes is not reported for FreeFlow without fastpath as the FreeFlow router appears to locks up after this message size in bandwidth tests.
+Figure~\ref{fig:freeflow_no_fastpath_cpu} indicates that even with the FreeFlow router not spinning on completion queues, it still uses a noticeable amount of CPU\@. 
+While it is not using 100\% of a CPU core like the fastpath version does, it does appear to incur around a 60\% CPU utilization overhead on the client.
 
 \begin{figure}
 	\centering
 	\resizebox{0.8\linewidth}{!}{
-		\includegraphics{freeflow_multi_vdev.png}
+		\includegraphics{freeflow_multi_dev.png}
 	}
 	\caption{Bandwidth + CPU with Multiple Devices}%
-	\label{fig:softroce_multi_vdev}
+	\label{fig:freeflow_multi_vdev}
 \end{figure}
+
+Figure~\ref{fig:freeflow_multi_vdev} was performed with multiple SoftRoCE devices created on both the client and server, with a single \texttt{ib\_(read|write|send)\_bw} test running on each device with a byte size of 65536.
+Interestingly, this is perhaps the most compelling performance picture of FreeFlow.
+At 65536 bytes, FreeFlow is able to adequately saturate the host NIC's bandwidth for a single FreeFlow device.
+This remains the case with each additional FreeFlow device added, suggesting the FreeFlow router is capable of juggling multiple client queues with no bandwidth performance impact.
+This test was not done for the non-fastpath mode as that mode appears to lock up with multiple connected FreeFlow clients.
 
 \subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
@@ -713,6 +721,7 @@ The use of SR-IOV does appear to have a small, but significant network performan
 Figure~\ref{fig:sriov_latency} shows that latency appears to be slightly worse for small message sizes and becomes up to 1 microsecond worse with larger payloads.
 Figure~\ref{fig:sriov_bandwidth} shows that, for bandwidth, SR-IOV appears to be capped at about 500 to 1000 MB/sec less than if using the raw host RDMA device.
 As expected, Figure~\ref{fig:sriov_cpu} shows CPU performance is not worse when using an SR-IOV device as all of the device multiplexing is done on the NIC itself. 
+Unfortunately, with SR-IOV implementations being a black box, it's difficult to reason about why the use of SR-IOV incurs latency and bandwidth penalties.
 
 \begin{figure}
 	\centering
@@ -726,6 +735,9 @@ As expected, Figure~\ref{fig:sriov_cpu} shows CPU performance is not worse when 
 Figure~\ref{fig:sriov_multi_vdev} was performed with multiple SR-IOV devices created on both the client and server, with a single \texttt{ib\_(read|write|send)\_bw} test running on each device with a byte size of 65536.
 SR-IOV appears to not suffer in bandwidth with the use of additional SR-IOV devices, indicating its performance scales nicely.
 However, similar to the single device tests, it seems that even the use of multiple SR-IOV devices has a bandwidth cap less than what is achievable with the raw host RDMA device.
+SR-IOV did have one issue scaling however; 
+the configuration of virtual functions appeared to get buggier and buggier with the more virtual functions that were provisioned.
+As a result, data is only reported for up to 22 configured virtual functions as any attempts to provision more virtual functions failed. 
 
 \subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
@@ -773,7 +785,7 @@ Thus, while these characteristics are not necessarily generalizable to all hardw
 \subsubsection*{Performance Tests}
 All of the following tests were performed on Cloudlab with two c6525-100g hosts, which have a 24 core AMD 7402P at 2.8GHz CPU, 128GB RAM, and a dual port ConnectX--5 Ex 100 Gbit NIC~\cite{cloudlab}. 
 Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using the Mellanox OFED RDMA stack version 5.5-1.0.3.2.
-As ASAP$^2$ Direct does not provide virtual interfaces itself, the tests configured ASAP$^2$ Direct hardware offload rules on top of SR-IOV virtual functions\footnote{it may be possible to use this with shared HCAs, but this was not tested in this thesis}, as detailed in~\cite{mellanoxdockerovs}.
+As ASAP$^2$ Direct does not provide virtual interfaces itself, the tests configured ASAP$^2$ Direct hardware offload rules on top of SR-IOV virtual functions, as detailed in~\cite{mellanoxdockerovs}.
 The tests also had configured one basic \texttt{tc-filter flower} rule to direct traffic from the VFs to the physical function, which was hardware offloaded.
 These results could differ widely depending on the number of Open-VSwitch rules configured, thus these results are only ballpark figures.
 
@@ -807,10 +819,28 @@ These results could differ widely depending on the number of Open-VSwitch rules 
 Figures~\ref{fig:asap2_direct_latency},~\ref{fig:asap2_direct_bandwidth}, and~\ref{fig:asap2_direct_cpu} were all performed with either a single SR-IOV device (labeled \texttt{sriov\_ovs}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
 Figure~\ref{fig:asap2_direct_latency} indicates that using ASAP$^2$ Direct has a noticeable latency overhead, more so than when just using SR-IOV alone. 
 Interestingly, this latency overhead appears to disappear at large payloads, where it tended to increase with SR-IOV alone.
-Figure~\ref{fig:asap2_direct_bandwidth} shows bandwidth results very similar to that of using SR-IOV alone, indicating perhaps that ASAP$^2$ Direct does not have much of an impact on bandwidth and the majority of that overhead comes from the use of SR-IOV.
-Again, ss expected, Figure~\ref{fig:asap2_direct_cpu} shows CPU performance is not worse than when using the raw host RDMA device as all of the Open-VSwitch processing and NIC multiplexing is happening at the NIC and not at the CPU.
+Figure~\ref{fig:asap2_direct_bandwidth} shows bandwidth results very similar to that of using SR-IOV alone, indicating perhaps that ASAP$^2$ Direct does not have much of an impact on bandwidth and the majority of that overhead comes from the use of SR-IOV\@.
+Again, as expected, Figure~\ref{fig:asap2_direct_cpu} shows CPU performance is identical as using the raw host RDMA device as all of the Open-VSwitch processing and NIC multiplexing is happening on the NIC and not on the CPU\@.
+Similarly to SR-IOV, ASAP$^2$ Direct is a black box so it's difficult to reason about why it has these latency and bandwidth overheads, and why they may differ from using SR-IOV alone.
 
-% todo: add multi dev tests
+\begin{figure}
+	\centering
+	\resizebox{0.8\linewidth}{!}{
+		\includegraphics{asap2_direct_multi_dev.png}
+	}
+	\caption{Bandwidth + CPU with Multiple Devices}%
+	\label{fig:asap2_direct_multi_vdev}
+\end{figure}
+
+Figure~\ref{fig:asap2_direct_multi_vdev} was performed with multiple SR-IOV devices created on both the client and server, with a single \texttt{ib\_(read|write|send)\_bw} test running on each device with a byte size of 65536.
+Each device pair had a unique \texttt{tc filter flower} rule configured such that traffic from one device in the pair could only be sent to the other device in the pair, which was enforced with MAC address matching in the rule.
+Similar to the single device tests, these rules were hardware offloaded with ASAP$^2$ Direct.
+
+It appears ASAP$^2$ Direct also scales quite nicely in bandwidth up to 16 devices, indicating that NIC was able to cleanly handle these additional hardware offloaded rules.
+However, similar to the SR-IOV tests, the scalability was only tested to up to 16 devices and virtual function provisioning became buggy after 16 devices.
+
+It may be possible to use ASAP$^2$ Direct with shared HCA devices which, if possible, is likely to provide better performance than when used with SR-IOV\@.
+However, this was not tested as Mellanox provides no documentation for how to use ASAP$^2$ Direct with shared HCAs.
 
 \subsubsection*{Miscellaneous Comments}
 \begin{description}[nolistsep,font={{\scshape\bfseries}}]
@@ -821,18 +851,6 @@ Again, ss expected, Figure~\ref{fig:asap2_direct_cpu} shows CPU performance is n
 	\item[Execution Privileges] requires no additional privileges
 	\item[Network Pressure] no additional network pressure when used with SR-IOV
 \end{description}
-
-
-% How to test:
-% Uninstall Mellanox OFED drivers (use ./uninstall.sh in MLNX_OFED)
-% Install `rdma-core` and `perftest`
-% Run `modprobe -rv mlx5_ib` and reboot.
-% Bring up SoftRoCE RDMA devices with `rdma link`
-% Disable RoCE on the underlying link (https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1877270), this has to be done AFTER `rdma link`.
-%
-% Other links:
-% https://github.com/linux-rdma/rdma-core/blob/master/Documentation/rxe.md
-% https://community.mellanox.com/s/article/howto-configure-soft-roce
 
 
 \subsection{Software Solutions: SoftRoCE}
@@ -970,20 +988,24 @@ This indicates that at least part of the RDMA in container solution must involve
 Third, for high performance computing environments, the security and support provided by vendor support solutions is unmatched when compared to small research projects like FreeFlow. 
 It would seem obvious these environments should rely on vendor supported solutions for this reason alone.
 
-In terms of what RDMA tooling will look like in this future, it does appear that the RDMA in container solution will integrate closely with existing container isolation tooling.
-Management of paravirtualized RDMA devices is already possible using the \texttt{rdma} CLI from the \texttt{iproute2} package, similar to using the \texttt{ip} CLI for network namespace management, and support for the \texttt{rdma} CLI appears to be growing.
+However, while the short term accessibility for RDMA-in-containers looks bleak (likely locked in to using Mellanox hardware), the long term accessibility appears bright.
+RDMA namespaces, RDMA cgroups, and hardware offload APIs are being developed openly in the Linux kernel and in collaboration with Open-VSwitch, thus making it possible for other vendors to support it as well.
+This also means there would be a single, unified interface to configure RDMA-in-containers (through tools like the \texttt{rdma} cli and \texttt{iproute2} package), which would further improve accessibility.
 
 
 \section{Conclusion}
-While containers are quickly 
-If you can afford it, NICs with hardware support for container topologies seem to be the best option for flexibility, support, and performance.
-You are at the mercy of Mellanox though.
+Containers present a compelling story for adoption in high performance computing environments in almost every way but in their support for RDMA\@.
+Despite the multiple solutions and advancements made to improve RDMA support inside containers, it remains that, currently, substantial assessment is required by each environment to determine which RDMA-in-containers solution is viable given each has its own unique downsides.
 
-The paravirtualized solutions seem like a good alternative, but they require a lot of maintenance to keep up to date, especially with how complex and industry-driven the RDMA code base is.
+For example, multi-tenant environments may need complete inter-host / network isolation and traffic shaping, which can only be provided by two solutions (FreeFlow and ASAP$^2$ Direct) listed in this thesis.
+Both solutions have an unavoidable network performance penalty associated with them and require either a hardware cost (due to being vendor proprietary) or require significant CPU utilization.
+Non-multi-tenant environments may only need VLAN isolation between devices, which can be provided at zero-cost by using shared HCA device.
+In addition, every environment has separate support, scalability, and configurable needs, further adding to assessment required by each environment.
 
-% while projects like FreeFlow are available to use now, and work as advertised, they don't seem the most stable and is not maintained, thus is likely unusable in production.
-
-% while this isn't the most exciting of conclusions, it's likely that the best RDMA-in-container solution is going to be industry backed solutions
+This thesis provides comprehensive data, analysis, and explanation on how they work for 5 different RDMA-in-containers solutions: shared HCAs, FreeFlow, SR-IOV, ASAP$^2$ Direct, and SoftRoCE\@.
+These range from being a pure software solution, to being a paravirtualized solutions, to a few hardware specific solutions, providing a wide range in possible RDMA-in-containers solutions.
+This should aid high performance computing environments in deciding which solution is most viable for their environment.
+Further, this thesis provides reproducibility for the FreeFlow paper and makes available the code used to generate data for this thesis, which can be used to profile other types of hosts and NICs.
 
 \section{Acknowledgments}
 I would like to sincerely thank my thesis advisor, Dr.\ Ryan Stutsman, for all of his support in writing this thesis.

@@ -65,6 +65,7 @@ def main(args: argparse.Namespace) -> int:
 
         ib_server.wait(timeout=15)
 
+        print(ib_client.stderr)
         print(ib_client.stdout)
 
         with open(f"{data_dir}/{c}_{args.data_suffix}.txt", "w") as f:
