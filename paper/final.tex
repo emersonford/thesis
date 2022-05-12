@@ -1,15 +1,35 @@
-\documentclass[12pt,titlepage]{article}
-\usepackage[letterpaper, left=1in, right=1in, top=1in, bottom=1in]{geometry}
-\renewcommand{\baselinestretch}{2}
+% Settings for iterating on this paper, editing, etc.
+% \documentclass[12pt,titlepage]{article}
+% \usepackage[letterpaper, left=1in, right=1in, top=1in, bottom=1in]{geometry}
+% \renewcommand{\baselinestretch}{2}
+% \usepackage{kpfonts}
+
+% More conference-paper like settings.
 % \documentclass[10pt,titlepage,twocolumn]{article}
 % \usepackage[letterpaper, left=0.75in, right=0.75in, top=0.75in, bottom=0.75in]{geometry}
 % \renewcommand{\baselinestretch}{1.2}
+
+% Honors College Thesis Settings
+\documentclass[12pt,titlepage]{article}
+\usepackage[letterpaper, left=1.5in, right=1in, top=1in, bottom=1in]{geometry}
+\usepackage{newtxtext}
+\renewcommand{\baselinestretch}{2}
+\usepackage{newtxtext}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\centering}{\thesection}{1em}{\MakeUppercase}
+\newcommand{\sectionbreak}{\clearpage}
+\titleformat{\subsection}{\normalfont\centering}{\MakeUppercase{\thesubsection}}{1em}{\MakeUppercase}
+\titleformat{\subsubsection}{\normalfont\centering}{\MakeUppercase{\thesubsubsection}}{1em}{\MakeUppercase}
+\usepackage{titletoc}
+\titlecontents{section}[0em]{}{\contentslabel{2.3em}}{}{\titlerule*[1pc]{ }\contentspage}
+
 \usepackage[T1]{fontenc}
 % \usepackage[utf8]{inputenc}
 \usepackage{csquotes}
 \usepackage[english]{babel}
 \usepackage{amscd,amssymb,amsmath,amsthm,mathtools}
-\usepackage{kpfonts}
 \usepackage{titling}
 \usepackage{setspace}
 \usepackage[sortcites=true]{biblatex}
@@ -28,18 +48,63 @@
 \addbibresource{citations.bib}
 \emergencystretch=1em
 
-\title{\Large\textbf{Explaining and Evaluating the Use of RDMA in High Performance Containers} \\
-Honors Computer Science Bachelor's Thesis}
-\author{\textbf{Author}: Emerson Ford \\
-\textbf{Advisor}: Dr.\ Ryan Stutsman \\
-\textbf{Honors Faculty Advisor}: Dr.\ Tom Henderson \\
-\textbf{Director of Undergraduate Studies}: Dr.\ James de St.\ Germain }
-\date{\today}
+% \title{\Large\textbf{Explaining and Evaluating the Use of RDMA in High Performance Containers} \\
+% Honors Computer Science Bachelor's Thesis}
+% \author{\textbf{Author}: Emerson Ford \\
+% \textbf{Advisor}: Dr.\ Ryan Stutsman \\
+% \textbf{Honors Faculty Advisor}: Dr.\ Tom Henderson \\
+% \textbf{Director of Undergraduate Studies}: Dr.\ James de St.\ Germain }
+% \date{\today}
 
 \begin{document}
-\maketitle
+% \maketitle
+\pagenumbering{roman}
+\begin{titlingpage}
+	\begin{center}
+	\uppercase{\textbf{Explaining and Evaluating the Use of RDMA in High Performance Containers}}\vspace{2em}
+
+	by
+
+	Emerson Ford\vspace{2em}
+
+	A Senior Honors Thesis Submitted to the Faculty of\vspace{-1em}
+
+	The University of Utah\vspace{-1em}
+
+	In Partial Fulfillment of the Requirements for the
+
+	Honors Degree in Bachelor of Science\vspace{2em}
+
+	In
+
+	Computer Science
+	\end{center}
+
+	\noindent
+	Approved:
+	\vspace{2em}
+	\begin{center}
+		\begin{tabularx}{\textwidth} {@{}X X@{}}
+			\nomakegapedcells{}
+			\makecell[lp{{\hsize-2em}}]{\hrulefill{}\vspace{-1em}\newline{}Ryan Stutsman, PhD\vspace{-1em}\newline{}Thesis Faculty Supervisor\vspace{-1em}\newline{}} & \makecell[lp{{\hsize-2em}}]{\hrulefill{}\vspace{-1em}\newline{}H.\ James de St.\ Germain, PhD\vspace{-1em}\newline{}Director of Undergraduate Studies\vspace{-1em}\newline{}School of Computing} \\[5em]
+			\makecell[lp{{\hsize-2em}}]{\hrulefill{}\vspace{-1em}\newline{}Thomas C. Henderson, PhD\vspace{-1em}\newline{}Honors Faculty Advisor} & \makecell[lp{{\hsize-2em}}]{\hrulefill{}\vspace{-1em}\newline{}Sylvia D.\ Torti, PhD\vspace{-1em}\newline{}Dean, Honors College}
+
+		\end{tabularx}
+	\end{center}
+
+	\vspace{1em}
+	\begin{center}
+		May 2022\vspace{-1em}
+
+		Copyright \copyright{} 2022\vspace{-1em}
+
+		All Rights Reserved
+	\end{center}
+\end{titlingpage}
 
 
+\setcounter{page}{2}
+\addcontentsline{toc}{section}{Abstract}
 \section*{Abstract}
 Containers are an increasingly popular packaging framework for complex applications, offering benefits such as lightweight isolation, portability, and ease of deployment.
 These benefits have the potential to solve a myriad of issues that have long been present in the high performance computing world, presenting a compelling narrative for their use in these environments.
@@ -50,6 +115,12 @@ Recent projects such as FreeFlow and Mellanox's RDMA hardware have created solut
 However, despite the strong claims made by these solutions, many of their characteristics such as performance, isolation sacrifices, and scalability are either not well documented or simply not known; these characteristics being critical to assess for several high performance computing use cases.
 This thesis attempts to remedy this issue by identifying, explaining, measuring, and comparing these characteristics for the various solutions available today for enabling RDMA in containers;
 ultimately providing high performance computing end-users a more holistic perspective on which solutions may be most viable for their environment and use case.
+
+\renewcommand*\contentsname{Table of Contents}
+\tableofcontents{}
+\clearpage
+\setcounter{page}{1}
+\pagenumbering{arabic}
 
 \section{Introduction}
 Containers offer a promising solution to a host of issues that have long plagued the high performance computing (HPC) world from dependency management to portable and reproducible environments to even lightweight sharing of hardware resources;
@@ -1033,4 +1104,12 @@ All of the data produced for this thesis can be reproduced following the instruc
 % \pagebreak
 % \section*{Appendix}
 % \appendix
+
+\clearpage
+\vspace*{10em}
+\begin{center}
+	Name of Candidate: Emerson Ford
+
+	Date of Submission: May 12, 2022
+\end{center}
 \end{document}
