@@ -234,7 +234,7 @@ These properties are used by the now outdated RDMA protocol RoCE v1, which allow
 Now, a MAC address alone does not suffice for standard networking, thus the host networking stack adds an IP layer on top of this for layer-3 routing.
 Normally, this IP layer exists solely in the host's software, but drivers for the RDMA-capable Ethernet NICs have added functionality to expose IP addresses and VLAN tags to the NIC, which are then stored in the NIC's GID table.
 These are then accessible to the RDMA control plane and are used by the RDMA protocol RoCE v2 that encapsulates RDMA packets inside of UDP packets for IP routable RDMA\@.
-On Infiniband fabrics, the story is more straight forward.
+On Infiniband fabrics, the story is more straightforward.
 In contrast to Ethernet NICs, most of the Infiniband networking logic lives on the NIC hardware (these Infiniband NICs being formally called HCAs), thus much of the Infiniband interface information --- such as its Local Identifier (LID), a layer-2 address, and Global Identifier (GID), a layer-3 address --- is stored on the NIC and is accessible to the RDMA control plane~\cite{mlnxofedmanual}.
 However, for both Ethernet and Infiniband, next hop information (usually deduced with the subnet mask or Infiniband PathRecord) is not exposed by the kernel to the NIC\@.
 As the final piece, user-space libraries (or the \texttt{rdmacm} module) will, depending on the specific NIC implementation, populate this information using the \texttt{ibv\_ah\_attr} and \texttt{ibv\_global\_route} structures, which are nested inside of \texttt{ibv\_qp}~\cite{rdmaawareprogramming,infinibandarch,rdmacorerepo}.
@@ -257,7 +257,7 @@ SR-IOV provides another form of virtualization, often useful in the context of v
 For example, the number of possible VFs is usually capped to under 150; use of VFs on Ethernet NICs can result in IP address exhaustion; and SR-IOV struggles with the same GID table entry exhaustion as software-based multiplexing as VFs share the same GID table as PFs, with GID table entry exhaustion resulting in the disabling of RDMA on some VFs~\cite{mlnxofedmanual}.
 
 \subsubsection{Management Plane}\label{subsubsec:Management Plane}
-The management plane for RDMA, which is integrated in the management plane for the NICs themselves, is then relatively straight forward.
+The management plane for RDMA, which is integrated in the management plane for the NICs themselves, is then relatively straightforward.
 Similar to control plane operations, character devices and device drivers are used as the communication channel for management plane operations, with libraries like \texttt{libibumad} being used to define the communication data types.
 User tools like \texttt{ibstat} or \texttt{ibdiag}, as well as network managers like Infiniband's Subnet Manager, will use these libraries to reconfigure NIC policies.
 These character devices can also be hidden from user-space processes as a method to prohibit NIC policy configuration.
@@ -294,7 +294,7 @@ Hundreds of containers can feasibly run on a single system with no more overhead
 
 \subsubsection{Container Networking}
 Up to this point, the systems that have been described provide intra-machine isolation in that they can isolate multiple containers running on a single host.
-If a container utilizes networking, there is then the question of intra-machine isolation and access control, such as how to restrict to what hosts a container can initiate network connections with.
+If a container utilizes networking, there is then the question of inter-machine isolation and access control, such as how to restrict to what hosts a container can initiate network connections with.
 These are accomplished with Linux's netfilter system (for which \texttt{iptables} or \texttt{nftables} are the front end) and general network stack (for which the iproute2 collection of tools is the front-end).
 % The Linux kernel provides the netfilter system (for which \texttt{iptables} and \texttt{nftables} is the front end) and iproute2 system for this functionality.
 
@@ -378,12 +378,12 @@ While this may be a solution for those needing faster container networking, RDMA
 
 \subsubsection{DPDK in Containers}
 The Data Plane Development Kit (DPDK) is another, popular form of kernel bypass networking.
-Instead of relying on the kernel's networking stack, a user-space process will communicate directly with the NIC and run it's own, custom network stack.
+Instead of relying on the kernel's networking stack, a user-space process will communicate directly with the NIC and run its own, custom network stack.
 This can be used as a form of high performance networking in containers, but does come with its own unique challenges and research questions.
 For example, DPDK often requires heavy CPU utilization, also cannot utilize in-kernel isolation systems, creates more difficulty with network isolation as it has fewer boundaries, and requires privileged containers which may not be desired~\cite{dpdkcontainers,dpdkperformancecontainers,inteldpdk}.
 As such, it remains an orthogonal solution to high performance networking in containers.
 
-\section{Overview}
+\section{Experimental Comparisons}
 \subsection{Paravirtualized Solutions}
 Paravirtualized solutions are those that interpose in some part of the RDMA logic path while keep the rest of the logic path in tact.
 Typically, the interposition is done in a part of the logic path that is not hot or performance sensitive (e.g.\ control plane operations) to add additional controllability while maintaining the performance characteristics of RDMA\@.
@@ -404,7 +404,7 @@ This is arguable the most ``batteries not required'' solution of using RDMA in c
 This solution creates new interfaces (with or without VLAN tags) on top of an RDMA device, then places this interface in the container's network namespace.
 As explained in Section~\ref{subsubsec:RDMA Namespaces and Cgroups}, this also places that interface's corresponding GID table entries in the namespace.
 Paired with restricting the \texttt{CAP\_NET\_ADMIN} capability for the container, this can then be used to give a container an isolated RDMA interface with a set MAC address, IP address, possible VLAN tag, and restrictions on RDMA resource usage using cgroups.
-However, as the RDMA device is not made aware of the host's virtual networks, the interface's properties must be valid on the host's network (e.g.\ the interface must have a valid IP address on the hosts actual network)~\cite{mellanoxdockermacvlan,dockermacvlan}.
+However, as the RDMA device is not made aware of the host's virtual networks, the interface's properties must be valid on the host's network (e.g.\ the interface must have a valid IP address on the host's actual network)~\cite{mellanoxdockermacvlan,dockermacvlan}.
 This solution is also typically called macvlan mode.
 
 \begin{figure}
@@ -430,7 +430,7 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{shared_hca_basic_lat.png}
 	}
 	\caption{Latency Tests}%
@@ -439,7 +439,7 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{shared_hca_basic_bw.png}
 	}
 	\caption{Bandwidth Tests}%
@@ -448,7 +448,7 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{shared_hca_cpu.png}
 	}
 	\caption{CPU Utilization}%
@@ -456,11 +456,12 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 \end{figure}
 
 Figures~\ref{fig:shared_hca_latency},~\ref{fig:shared_hca_bandwidth}, and~\ref{fig:shared_hca_cpu} were all performed with either a single shared HCA device (labeled \texttt{shared}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
+The x-axis represents the size of each RDMA message in number of bytes.
 All three of these graphs indicate there is no perceivable difference between using the single raw RDMA device vs using a shared HCA device.
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{shared_hca_multi_dev.png}
 	}
 	\caption{Bandwidth + CPU with Multiple Devices}%
@@ -545,7 +546,7 @@ Unfortunately, it appears no fastpath suffers from deadlocks with specific RDMA 
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{freeflow_basic_lat.png}
 	}
 	\caption{Fastpath Latency Tests}%
@@ -554,7 +555,7 @@ Unfortunately, it appears no fastpath suffers from deadlocks with specific RDMA 
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{freeflow_basic_bw.png}
 	}
 	\caption{Fastpath Bandwidth Tests}%
@@ -563,7 +564,7 @@ Unfortunately, it appears no fastpath suffers from deadlocks with specific RDMA 
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{freeflow_cpu.png}
 	}
 	\caption{Fastpath CPU Utilization}%
@@ -581,7 +582,7 @@ Aside from this, FreeFlow doesn't appear to require any additional CPU utilizati
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{freeflow_no_fastpath_basic_lat.png}
 	}
 	\caption{No Fastpath Latency Tests}%
@@ -590,7 +591,7 @@ Aside from this, FreeFlow doesn't appear to require any additional CPU utilizati
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{freeflow_no_fastpath_basic_bw.png}
 	}
 	\caption{No Fastpath Bandwidth Tests}%
@@ -599,7 +600,7 @@ Aside from this, FreeFlow doesn't appear to require any additional CPU utilizati
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{freeflow_no_fastpath_cpu.png}
 	}
 	\caption{No Fastpath CPU Utilization}%
@@ -618,7 +619,7 @@ While it is not using 100\% of a CPU core like the fastpath version does, it doe
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{freeflow_multi_dev.png}
 	}
 	\caption{Bandwidth + CPU with Multiple Devices}%
@@ -691,7 +692,7 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{sriov_basic_lat.png}
 	}
 	\caption{Latency Tests}%
@@ -700,7 +701,7 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{sriov_basic_bw.png}
 	}
 	\caption{Bandwidth Tests}%
@@ -709,7 +710,7 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{sriov_cpu.png}
 	}
 	\caption{CPU Utilization}%
@@ -717,15 +718,15 @@ Both were running Ubuntu 20.04 with Linux kernel version 5.4.0, and were using t
 \end{figure}
 
 Figures~\ref{fig:sriov_latency},~\ref{fig:sriov_bandwidth}, and~\ref{fig:sriov_cpu} were all performed with either a single SR-IOV device (labeled \texttt{sriov}) or a single raw RDMA device (labeled \texttt{host}), with varying RDMA message sizes.
-The use of SR-IOV does appear to have a small, but significant network performance impact.
-Figure~\ref{fig:sriov_latency} shows that latency appears to be slightly worse for small message sizes and becomes up to 1 microsecond worse with larger payloads.
+The use of SR-IOV does appear to have an impact on bandwidth, but surprisingly, appears to perform better than the raw host device with latency.
+Figure~\ref{fig:sriov_latency} shows that latency appears to be about equal with host performance for small message sizes and becomes up to 1 microsecond better with larger payloads.
 Figure~\ref{fig:sriov_bandwidth} shows that, for bandwidth, SR-IOV appears to be capped at about 500 to 1000 MB/sec less than if using the raw host RDMA device.
 As expected, Figure~\ref{fig:sriov_cpu} shows CPU performance is not worse when using an SR-IOV device as all of the device multiplexing is done on the NIC itself. 
-Unfortunately, with SR-IOV implementations being a black box, it's difficult to reason about why the use of SR-IOV incurs latency and bandwidth penalties.
+Unfortunately, with SR-IOV implementations being a black box, it's difficult to reason about why the use of SR-IOV incurs bandwidth penalties and why it appears to perform better in terms of latency.
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{sriov_multi_dev.png}
 	}
 	\caption{Bandwidth + CPU with Multiple Device}%
@@ -764,7 +765,7 @@ One notable and more accessible hardware offload system that supports RDMA is Me
 Together with SR-IOV, ASAP$^2$ Direct can be used for full hardware enforced inter and intra-machine RDMA device isolation;
 allowing for extremely performant, isolated use of RDMA inside of containers.
 ASAP$^2$ Direct is not the only form of hardware offload for RDMA, but may be the most accessible given the prevalence of ConnectX series NICs in high performance computing environments and with it not being a cloud proprietary solution (e.g.\ Azure accelerated NICs).
-Thus, while these characteristics are not necessarily generalizable to all hardware offloads systems, it's characteristics will be described below to give a general overview of what one form of hardware offload can provide.
+Thus, while these characteristics are not necessarily generalizable to all hardware offloads systems, its characteristics will be described below to give a general overview of what one form of hardware offload can provide.
 
 \begin{figure}
 	\centering
@@ -791,7 +792,7 @@ These results could differ widely depending on the number of Open-VSwitch rules 
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{asap2_direct_basic_lat.png}
 	}
 	\caption{Latency Tests}%
@@ -800,7 +801,7 @@ These results could differ widely depending on the number of Open-VSwitch rules 
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{asap2_direct_basic_bw.png}
 	}
 	\caption{Bandwidth Tests}%
@@ -809,7 +810,7 @@ These results could differ widely depending on the number of Open-VSwitch rules 
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{asap2_direct_cpu.png}
 	}
 	\caption{CPU Utilization}%
@@ -825,7 +826,7 @@ Similarly to SR-IOV, ASAP$^2$ Direct is a black box so it's difficult to reason 
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{asap2_direct_multi_dev.png}
 	}
 	\caption{Bandwidth + CPU with Multiple Devices}%
@@ -878,7 +879,7 @@ Both were running Ubuntu 21.10 with Linux kernel version 5.13.0-35\footnote{Linu
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{softroce_basic_lat.png}
 	}
 	\caption{Latency Tests}%
@@ -887,7 +888,7 @@ Both were running Ubuntu 21.10 with Linux kernel version 5.13.0-35\footnote{Linu
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{softroce_basic_bw.png}
 	}
 	\caption{Bandwidth Tests}%
@@ -896,7 +897,7 @@ Both were running Ubuntu 21.10 with Linux kernel version 5.13.0-35\footnote{Linu
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{softroce_cpu.png}
 	}
 	\caption{CPU Utilization}%
@@ -916,7 +917,7 @@ This is likely due to one CPU core being entirely used for SoftRoCE processing a
 
 \begin{figure}
 	\centering
-	\resizebox{0.8\linewidth}{!}{
+	\resizebox{\linewidth}{!}{
 		\includegraphics{softroce_multi_vdev.png}
 	}
 	\caption{Bandwidth + CPU with Multiple Devices}%
